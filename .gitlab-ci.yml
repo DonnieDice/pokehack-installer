@@ -1,0 +1,61 @@
+stages: [test, build]
+
+variables:
+  EXPO_TELEMETRY_DISABLED: "1"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+unit-tests:
+  stage: test
+  image: node:20-bookworm
+  cache:
+    key:
+      files:
+        - package.json
+    paths:
+      - node_modules/
+  script:
+    - npm install --no-audit --no-fund
+    - npx jest --ci
+
+web-export:
+  stage: build
+  image: node:20-bookworm
+  cache:
+    key:
+      files:
+        - package.json
+    paths:
+      - node_modules/
+  script:
+    - npm install --no-audit --no-fund
+    - npx expo install react-native-web react-dom @expo/metro-runtime
+    - npx expo export --platform web
+  artifacts:
+    name: "web-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - dist/
+    expire_in: 1 week
+  allow_failure: true
+
+android-debug-apk:
+  stage: build
+  image: mingc/android-build-box:latest
+  tags: [android]
+  cache:
+    key:
+      files:
+        - package.json
+    paths:
+      - node_modules/
+      - .gradle/
+  script:
+    - npm install --no-audit --no-fund
+    - npx expo prebuild -p android --no-install
+    - cd android && ./gradlew assembleDebug --no-daemon
+  artifacts:
+    name: "apk-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - android/app/build/outputs/apk/debug/*.apk
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
