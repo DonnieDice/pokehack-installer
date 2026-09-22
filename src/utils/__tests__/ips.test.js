@@ -50,7 +50,7 @@ describe('applyIps', () => {
 
   test('rejects bad magic bytes', () => {
     const rom = u8([0, 0, 0, 0]);
-    const patch = u8([0x41, 0x42, 0x43, 0x44, 0x45, 0x46]);
+    const patch = u8([0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48]);
     expect(() => applyIps(rom, patch)).toThrow(/magic/i);
   });
 
