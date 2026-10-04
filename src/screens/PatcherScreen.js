@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
 import { patchRom } from '../utils/patcher';
+import { friendlyPatchError } from '../utils/patchErrors';
 
 function FileRow({ number, title, hint, file, onPick, disabled }) {
   return (
@@ -31,10 +32,26 @@ export default function PatcherScreen({ route }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState('read');
+  const cancelRef = useRef(false);
 
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
   const canApply = !isWeb && fmt === 'ips' && rom && patch && !busy;
+
+  function phaseLabel() {
+    switch (phase) {
+      case 'read':
+        return 'READING';
+      case 'apply':
+        return 'APPLYING';
+      case 'write':
+        return 'WRITING';
+      default:
+        return 'WORKING';
+    }
+  }
 
   async function pick(onSet) {
     setError(null);
@@ -48,14 +65,32 @@ export default function PatcherScreen({ route }) {
     setError(null);
     setResult(null);
     setBusy(true);
+    cancelRef.current = false;
+    setProgress(0);
+    setPhase('read');
     try {
-      const out = await patchRom({ romUri: rom.uri, patchUri: patch.uri, hack });
+      const out = await patchRom({
+        romUri: rom.uri,
+        patchUri: patch.uri,
+        hack,
+        onProgress: (fraction, p) => {
+          setProgress(fraction);
+          if (p) setPhase(p);
+        },
+        isCancelled: () => cancelRef.current,
+      });
       setResult(out);
     } catch (e) {
-      setError(e.message || String(e));
+      setError(friendlyPatchError(e, hack));
     } finally {
       setBusy(false);
+      setProgress(0);
+      setPhase('read');
     }
+  }
+
+  function cancel() {
+    cancelRef.current = true;
   }
 
   return (
@@ -87,7 +122,7 @@ export default function PatcherScreen({ route }) {
         hint="A clean dump of the game this hack is built on"
         file={rom}
         onPick={() => pick(setRom)}
-        disabled={isWeb}
+        disabled={isWeb || busy}
       />
       <FileRow
         number="2"
@@ -95,12 +130,26 @@ export default function PatcherScreen({ route }) {
         hint="Downloaded from the hack's project page"
         file={patch}
         onPick={() => pick(setPatch)}
-        disabled={isWeb}
+        disabled={isWeb || busy}
       />
 
       <TouchableOpacity style={[s.applyButton, !canApply && s.applyDisabled]} onPress={run} disabled={!canApply}>
         <Text style={s.applyText}>{busy ? 'PATCHING...' : 'APPLY PATCH'}</Text>
       </TouchableOpacity>
+
+      {busy ? (
+        <View style={s.progressRow}>
+          <Text style={s.phaseText}>{phaseLabel()} {Math.round(progress * 100)}%</Text>
+          <TouchableOpacity style={s.cancelButton} onPress={cancel}>
+            <Text style={s.cancelText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+      {busy ? (
+        <View style={s.progressTrack}>
+          <View style={[s.progressBar, { width: `${progress * 100}%` }]} />
+        </View>
+      ) : null}
 
       {error ? (
         <View style={s.errorBox}>
@@ -145,6 +194,12 @@ const s = StyleSheet.create({
   applyButton: { backgroundColor: COLORS.primary, borderRadius: RADIUS.md, alignItems: 'center', paddingVertical: 16, marginTop: SPACING.md },
   applyDisabled: { opacity: 0.35 },
   applyText: { color: '#0a0a0f', fontFamily: FONT.pixel, fontSize: 10 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.md, justifyContent: 'space-between' },
+  phaseText: { color: COLORS.textSub, fontFamily: FONT.body, fontSize: 13 },
+  cancelButton: { backgroundColor: COLORS.errorDim, borderColor: COLORS.error, borderWidth: 1, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, paddingVertical: 6 },
+  cancelText: { color: COLORS.error, fontFamily: FONT.pixel, fontSize: 9 },
+  progressTrack: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADIUS.md, height: 10, marginTop: SPACING.sm, overflow: 'hidden' },
+  progressBar: { backgroundColor: COLORS.primary, height: '100%' },
   errorBox: { backgroundColor: COLORS.errorDim, borderColor: COLORS.error, borderWidth: 1, borderRadius: RADIUS.md, padding: SPACING.md, marginTop: SPACING.lg },
   errorTitle: { color: COLORS.error, fontFamily: FONT.pixel, fontSize: 9 },
   errorBody: { color: COLORS.textSub, fontFamily: FONT.body, fontSize: 13, marginTop: SPACING.sm },
