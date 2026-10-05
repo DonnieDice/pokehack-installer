@@ -3,6 +3,7 @@ import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import * as DocumentPicker from 'expo-document-picker';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
 import { patchRom } from '../utils/patcher';
+import { sharePatchedRom, openInEmulator } from '../utils/share';
 
 function FileRow({ number, title, hint, file, onPick, disabled }) {
   return (
@@ -51,6 +52,30 @@ export default function PatcherScreen({ route }) {
     try {
       const out = await patchRom({ romUri: rom.uri, patchUri: patch.uri, hack });
       setResult(out);
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function share() {
+    setError(null);
+    setBusy(true);
+    try {
+      await sharePatchedRom(result.path);
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openEmulator() {
+    setError(null);
+    setBusy(true);
+    try {
+      await openInEmulator(result.path);
     } catch (e) {
       setError(e.message || String(e));
     } finally {
@@ -116,6 +141,22 @@ export default function PatcherScreen({ route }) {
             {result.records} patch records applied.{'\n'}Output ({(result.size / 1024 / 1024).toFixed(1)} MB):{'\n'}
             {result.path}
           </Text>
+          <View style={s.successButtons}>
+            <TouchableOpacity
+              style={[s.successButton, s.successButtonPrimary]}
+              onPress={share}
+              disabled={busy}
+            >
+              <Text style={s.successButtonText}>SHARE ROM</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.successButton, s.successButtonSecondary]}
+              onPress={openEmulator}
+              disabled={busy}
+            >
+              <Text style={s.successButtonText}>OPEN IN EMULATOR</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={s.successHint}>
             Copy the patched ROM to your emulator's games folder. Never distribute patched ROMs — share the patch file instead.
           </Text>
@@ -152,4 +193,9 @@ const s = StyleSheet.create({
   successTitle: { color: COLORS.success, fontFamily: FONT.pixel, fontSize: 9 },
   successBody: { color: COLORS.text, fontFamily: FONT.body, fontSize: 13, marginTop: SPACING.sm },
   successHint: { color: COLORS.textMuted, fontFamily: FONT.body, fontSize: 11, marginTop: SPACING.sm },
+  successButtons: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
+  successButton: { flex: 1, borderRadius: RADIUS.md, alignItems: 'center', paddingVertical: 12 },
+  successButtonPrimary: { backgroundColor: COLORS.primary },
+  successButtonSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  successButtonText: { color: '#0a0a0f', fontFamily: FONT.pixel, fontSize: 9 },
 });
