@@ -35,7 +35,7 @@ export default function PatcherScreen({ route }) {
 
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
-  const canApply = !isWeb && fmt === 'ips' && rom && patch && !busy;
+  const canApply = !isWeb && (fmt === 'ips' || fmt === 'xdelta') && rom && patch && !busy;
 
   async function pick(onSet) {
     setError(null);
@@ -83,6 +83,13 @@ export default function PatcherScreen({ route }) {
     }
   }
 
+  // Only show the "not yet implemented" warning for formats that are neither
+  // IPS nor xdelta (e.g. BPS, UPS).
+  const showNotImplementedWarning = fmt !== 'ips' && fmt !== 'xdelta';
+
+  // NDS-specific hint for large ROMs
+  const isNds = hack.platform === 'NDS' || fmt === 'xdelta';
+
   return (
     <ScrollView style={s.root} contentContainerStyle={{ padding: SPACING.md }}>
       <Text style={s.title}>PATCHING: {hack.title.toUpperCase()}</Text>
@@ -98,10 +105,18 @@ export default function PatcherScreen({ route }) {
         </View>
       ) : null}
 
-      {fmt !== 'ips' ? (
+      {showNotImplementedWarning ? (
         <View style={s.warnBox}>
           <Text style={s.warnText}>
             {fmt.toUpperCase()} support is still in development. IPS hacks work today — this one is tracked as a work item.
+          </Text>
+        </View>
+      ) : null}
+
+      {isNds ? (
+        <View style={s.notice}>
+          <Text style={s.noticeText}>
+            Expected base: {hack.baseRomName} — 256MB+, ensure free space
           </Text>
         </View>
       ) : null}
