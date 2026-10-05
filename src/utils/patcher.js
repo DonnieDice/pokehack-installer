@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { applyIps } from './ips';
+import { applyUps } from './ups';
 import { base64ToBytes, bytesToBase64 } from './b64';
 
 function outExtensionFor(hack) {
@@ -20,11 +21,6 @@ export async function patchRom({ romUri, patchUri, hack }) {
     throw new Error('Patching runs in the Android app only. The web preview is for browsing the catalog.');
   }
   const fmt = ((hack && hack.patchFormat) || 'ips').toLowerCase();
-  if (fmt !== 'ips') {
-    throw new Error(
-      fmt.toUpperCase() + ' patching is not implemented yet (tracked as a work item). IPS works today.'
-    );
-  }
   const outDir = FileSystem.documentDirectory + 'patched/';
   try {
     await FileSystem.makeDirectory(outDir, { intermediates: true });
@@ -39,7 +35,17 @@ export async function patchRom({ romUri, patchUri, hack }) {
 
   const romBytes = base64ToBytes(romB64);
   const patchBytes = base64ToBytes(patchB64);
-  const applied = applyIps(romBytes, patchBytes);
+
+  let applied;
+  if (fmt === 'ips') {
+    applied = applyIps(romBytes, patchBytes);
+  } else if (fmt === 'ups') {
+    applied = applyUps(romBytes, patchBytes);
+  } else {
+    throw new Error(
+      fmt.toUpperCase() + ' patching is not implemented yet (tracked as a work item). IPS works today.'
+    );
+  }
 
   const name = sanitizeName((hack && hack.title) + '-' + (hack && hack.id)) + '.' + outExtensionFor(hack);
   const outPath = outDir + name;
