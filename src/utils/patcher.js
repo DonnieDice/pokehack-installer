@@ -4,6 +4,7 @@ import { applyIps } from './ips';
 import { applyUps } from './ups';
 import { applyXdelta } from './xdelta';
 import { base64ToBytes, bytesToBase64 } from './b64';
+import { verifyRom } from './verify';
 
 function outExtensionFor(hack) {
   const base = (hack && hack.baseRomName) || '';
@@ -26,6 +27,10 @@ export async function patchRom({ romUri, patchUri, hack }) {
   try {
     await FileSystem.makeDirectory(outDir, { intermediates: true });
   } catch (e) {}
+
+  // Verify the base ROM BEFORE reading the patch or writing any output.
+  // A wrong dump must abort early — no partial patched file is produced.
+  await verifyRom(romUri, (hack && hack.baseRomName) || '');
 
   let applied;
   if (fmt === 'ips') {

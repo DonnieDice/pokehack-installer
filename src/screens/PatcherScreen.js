@@ -3,6 +3,7 @@ import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import * as DocumentPicker from 'expo-document-picker';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
 import { patchRom } from '../utils/patcher';
+import { formatVerifyError } from '../utils/verify';
 import { sharePatchedRom, openInEmulator } from '../utils/share';
 
 function FileRow({ number, title, hint, file, onPick, disabled }) {
@@ -32,6 +33,7 @@ export default function PatcherScreen({ route }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [errorTitle, setErrorTitle] = useState('PATCH FAILED');
 
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
@@ -53,7 +55,9 @@ export default function PatcherScreen({ route }) {
       const out = await patchRom({ romUri: rom.uri, patchUri: patch.uri, hack });
       setResult(out);
     } catch (e) {
-      setError(e.message || String(e));
+      const rendered = formatVerifyError(e);
+      setError(rendered.body);
+      setErrorTitle(rendered.title);
     } finally {
       setBusy(false);
     }
@@ -144,7 +148,7 @@ export default function PatcherScreen({ route }) {
 
       {error ? (
         <View style={s.errorBox}>
-          <Text style={s.errorTitle}>PATCH FAILED</Text>
+          <Text style={s.errorTitle}>{errorTitle}</Text>
           <Text style={s.errorBody}>{error}</Text>
         </View>
       ) : null}
