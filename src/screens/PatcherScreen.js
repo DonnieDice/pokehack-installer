@@ -42,7 +42,7 @@ export default function PatcherScreen({ route }) {
 
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
-  const canApply = !isWeb && (fmt === 'ips' || fmt === 'ups' || fmt === 'xdelta') && rom && patch && !busy;
+  const canApply = !isWeb && (fmt === 'ips' || fmt === 'ups' || fmt === 'bps' || fmt === 'xdelta') && rom && patch && !busy;
 
   function phaseLabel() {
     switch (phase) {
@@ -144,9 +144,10 @@ export default function PatcherScreen({ route }) {
     }
   }
 
-  // Only show the "not yet implemented" warning for formats that are neither
-  // IPS, UPS, nor xdelta (e.g. BPS).
-  const showNotImplementedWarning = fmt !== 'ips' && fmt !== 'ups' && fmt !== 'xdelta';
+  // Only show the "not yet implemented" warning for formats this patcher does
+  // not dispatch. BPS is dispatched (tracked as #1, merged into main) so it is
+  // enabled here along with UPS/xdelta. e.g. any future format not yet wired.
+  const showNotImplementedWarning = fmt !== 'ips' && fmt !== 'ups' && fmt !== 'bps' && fmt !== 'xdelta';
 
   // NDS-specific hint for large ROMs
   const isNds = hack.platform === 'NDS' || fmt === 'xdelta';
