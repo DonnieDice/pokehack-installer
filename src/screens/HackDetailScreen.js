@@ -1,6 +1,7 @@
 import React from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, DIFFICULTY_COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
+import { getCachedPatch } from '../utils/patchCache';
 
 function Info({ label, value, color }) {
   return (
@@ -18,6 +19,23 @@ export default function HackDetailScreen({ navigation, route }) {
   const platformColor = PLATFORM_COLORS[hack.platform] || COLORS.primary;
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
   const accent = hack.accentColor || platformColor;
+
+  const [downloading, setDownloading] = React.useState(false);
+
+  const canDownload = typeof hack.patchUrl === 'string' && hack.patchUrl.startsWith('https://');
+
+  async function handleDownloadPatch() {
+    if (!hack.patchUrl || !hack.patchSha256) return;
+    setDownloading(true);
+    try {
+      const patchUri = await getCachedPatch(hack.patchUrl, hack.patchSha256);
+      navigation.navigate('Patcher', { hack, patchUri });
+    } catch (err) {
+      Alert.alert('Patch Download Failed', err.message || String(err));
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <ScrollView style={s.root} contentContainerStyle={{ padding: SPACING.md, paddingBottom: SPACING.xxl }}>
@@ -57,6 +75,18 @@ export default function HackDetailScreen({ navigation, route }) {
       <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(hack.projectUrl)}>
         <Text style={s.linkButtonText}>OPEN PROJECT PAGE</Text>
       </TouchableOpacity>
+
+      {canDownload ? (
+        <TouchableOpacity
+          style={[s.downloadButton, downloading && s.buttonDisabled]}
+          onPress={handleDownloadPatch}
+          disabled={downloading}
+        >
+          <Text style={s.downloadButtonText}>
+            {downloading ? 'DOWNLOADING…' : 'DOWNLOAD PATCH'}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       <TouchableOpacity style={[s.patchButton, { backgroundColor: accent }]} onPress={() => navigation.navigate('Patcher', { hack })}>
         <Text style={s.patchButtonText}>PATCH YOUR ROM</Text>
@@ -115,6 +145,16 @@ const s = StyleSheet.create({
     marginTop: SPACING.xl,
   },
   linkButtonText: { color: COLORS.textSub, fontFamily: FONT.pixel, fontSize: 9 },
+  downloadButton: {
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.success,
+    borderRadius: RADIUS.md,
+    paddingVertical: 16,
+    marginTop: SPACING.md,
+  },
+  downloadButtonText: { color: COLORS.success, fontFamily: FONT.pixel, fontSize: 10 },
+  buttonDisabled: { opacity: 0.5 },
   patchButton: { alignItems: 'center', borderRadius: RADIUS.md, paddingVertical: 16, marginTop: SPACING.md },
   patchButtonText: { color: '#0a0a0f', fontFamily: FONT.pixel, fontSize: 10 },
   legal: { color: COLORS.textMuted, fontFamily: FONT.body, fontSize: 11, textAlign: 'center', marginTop: SPACING.lg },

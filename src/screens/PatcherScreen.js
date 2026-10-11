@@ -28,16 +28,32 @@ function FileRow({ number, title, hint, file, onPick, disabled }) {
 
 export default function PatcherScreen({ route }) {
   const hack = route.params.hack;
+  const patchUri = route.params.patchUri;
   const [rom, setRom] = useState(null);
-  const [patch, setPatch] = useState(null);
+  const [patch, setPatch] = useState(
+    patchUri
+      ? { uri: patchUri, name: hack.patchFormat.toUpperCase() + ' patch (downloaded)' }
+      : null
+  );
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [errorTitle, setErrorTitle] = useState('PATCH FAILED');
 
+  // Clear any stale error when a new patchUri arrives.
+  React.useEffect(() => {
+    if (patchUri && !rom) {
+      // A freshly downloaded patch URI means we have a valid patch;
+      // nothing further is needed from the patch picker.
+      setPatch({ uri: patchUri, name: hack.patchFormat.toUpperCase() + ' patch (downloaded)' });
+    }
+  }, [patchUri]);
+
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
+  // When a patch was pre-downloaded, the user only needs to pick the ROM.
   const canApply = !isWeb && (fmt === 'ips' || fmt === 'xdelta') && rom && patch && !busy;
+  const patchPreselected = Boolean(patchUri);
 
   async function pick(onSet) {
     setError(null);
@@ -136,7 +152,7 @@ export default function PatcherScreen({ route }) {
       <FileRow
         number="2"
         title={'Pick the ' + fmt.toUpperCase() + ' patch file'}
-        hint="Downloaded from the hack's project page"
+        hint={patchPreselected ? 'Patch downloaded — ready to apply' : "Downloaded from the hack's project page"}
         file={patch}
         onPick={() => pick(setPatch)}
         disabled={isWeb}
