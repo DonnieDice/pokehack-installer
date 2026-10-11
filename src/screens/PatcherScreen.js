@@ -2,8 +2,10 @@ import React, { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
-import { patchRom } from '../utils/patcher';
+import { patchRom, CancelledError } from '../utils/patcher';
 import { friendlyPatchError } from '../utils/patchErrors';
+import { formatVerifyError } from '../utils/verify';
+import { sharePatchedRom, openInEmulator } from '../utils/share';
 
 function FileRow({ number, title, hint, file, onPick, disabled }) {
   return (
@@ -32,13 +34,15 @@ export default function PatcherScreen({ route }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [errorTitle, setErrorTitle] = useState('PATCH FAILED');
+
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState('read');
   const cancelRef = useRef(false);
 
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
-  const canApply = !isWeb && fmt === 'ips' && rom && patch && !busy;
+  const canApply = !isWeb && (fmt === 'ips' || fmt === 'ups' || fmt === 'xdelta') && rom && patch && !busy;
 
   function phaseLabel() {
     switch (phase) {
@@ -61,13 +65,18 @@ export default function PatcherScreen({ route }) {
     }
   }
 
+  function resetProgress() {
+    setProgress(0);
+    setPhase('read');
+  }
+
   async function run() {
     setError(null);
+    setErrorTitle('PATCH FAILED');
     setResult(null);
     setBusy(true);
     cancelRef.current = false;
-    setProgress(0);
-    setPhase('read');
+    resetProgress();
     try {
       const out = await patchRom({
         romUri: rom.uri,
@@ -81,17 +90,66 @@ export default function PatcherScreen({ route }) {
       });
       setResult(out);
     } catch (e) {
-      setError(friendlyPatchError(e, hack));
+      // CancelledError is a user action, not a failure — surface it cleanly.
+      if (e instanceof CancelledError) {
+        setError('Patching cancelled.');
+        setErrorTitle('CANCELLED');
+        return;
+      }
+      // Friendly mapping first; fall back to structured verify-error rendering.
+      const friendly = friendlyPatchError(e, hack);
+      if (friendly && friendly !== 'Unknown patch error') {
+        setError(friendly);
+        setErrorTitle('PATCH FAILED');
+      } else {
+        const rendered = formatVerifyError(e);
+        setError(rendered.body);
+        setErrorTitle(rendered.title);
+      }
     } finally {
       setBusy(false);
-      setProgress(0);
-      setPhase('read');
+      resetProgress();
     }
   }
 
   function cancel() {
     cancelRef.current = true;
   }
+
+  async function share() {
+    setError(null);
+    setErrorTitle('SHARE FAILED');
+    setBusy(true);
+    try {
+      await sharePatchedRom(result.path);
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setBusy(false);
+      resetProgress();
+    }
+  }
+
+  async function openEmulator() {
+    setError(null);
+    setErrorTitle('OPEN IN EMULATOR FAILED');
+    setBusy(true);
+    try {
+      await openInEmulator(result.path);
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setBusy(false);
+      resetProgress();
+    }
+  }
+
+  // Only show the "not yet implemented" warning for formats that are neither
+  // IPS, UPS, nor xdelta (e.g. BPS).
+  const showNotImplementedWarning = fmt !== 'ips' && fmt !== 'ups' && fmt !== 'xdelta';
+
+  // NDS-specific hint for large ROMs
+  const isNds = hack.platform === 'NDS' || fmt === 'xdelta';
 
   return (
     <ScrollView style={s.root} contentContainerStyle={{ padding: SPACING.md }}>
@@ -108,10 +166,18 @@ export default function PatcherScreen({ route }) {
         </View>
       ) : null}
 
-      {fmt !== 'ips' ? (
+      {showNotImplementedWarning ? (
         <View style={s.warnBox}>
           <Text style={s.warnText}>
-            {fmt.toUpperCase()} support is still in development. IPS hacks work today — this one is tracked as a work item.
+            {fmt.toUpperCase()} support is still in development. IPS, UPS, and xdelta hacks work today — this one is tracked as a work item.
+          </Text>
+        </View>
+      ) : null}
+
+      {isNds ? (
+        <View style={s.notice}>
+          <Text style={s.noticeText}>
+            Expected base: {hack.baseRomName} — 256MB+, ensure free space
           </Text>
         </View>
       ) : null}
@@ -153,7 +219,7 @@ export default function PatcherScreen({ route }) {
 
       {error ? (
         <View style={s.errorBox}>
-          <Text style={s.errorTitle}>PATCH FAILED</Text>
+          <Text style={s.errorTitle}>{errorTitle}</Text>
           <Text style={s.errorBody}>{error}</Text>
         </View>
       ) : null}
@@ -165,6 +231,22 @@ export default function PatcherScreen({ route }) {
             {result.records} patch records applied.{'\n'}Output ({(result.size / 1024 / 1024).toFixed(1)} MB):{'\n'}
             {result.path}
           </Text>
+          <View style={s.successButtons}>
+            <TouchableOpacity
+              style={[s.successButton, s.successButtonPrimary]}
+              onPress={share}
+              disabled={busy}
+            >
+              <Text style={s.successButtonText}>SHARE ROM</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.successButton, s.successButtonSecondary]}
+              onPress={openEmulator}
+              disabled={busy}
+            >
+              <Text style={s.successButtonText}>OPEN IN EMULATOR</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={s.successHint}>
             Copy the patched ROM to your emulator's games folder. Never distribute patched ROMs — share the patch file instead.
           </Text>
@@ -207,4 +289,9 @@ const s = StyleSheet.create({
   successTitle: { color: COLORS.success, fontFamily: FONT.pixel, fontSize: 9 },
   successBody: { color: COLORS.text, fontFamily: FONT.body, fontSize: 13, marginTop: SPACING.sm },
   successHint: { color: COLORS.textMuted, fontFamily: FONT.body, fontSize: 11, marginTop: SPACING.sm },
+  successButtons: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
+  successButton: { flex: 1, borderRadius: RADIUS.md, alignItems: 'center', paddingVertical: 12 },
+  successButtonPrimary: { backgroundColor: COLORS.primary },
+  successButtonSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  successButtonText: { color: '#0a0a0f', fontFamily: FONT.pixel, fontSize: 9 },
 });

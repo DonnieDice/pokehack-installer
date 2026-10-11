@@ -1,7 +1,10 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { applyIps } from './ips';
+import { applyUps } from './ups';
+import { applyXdelta } from './xdelta';
 import { base64ToBytes, bytesToBase64 } from './b64';
+import { verifyRom } from './verify';
 
 /**
  * Raised when the user cancels an in-flight patch. The surface message is
@@ -145,6 +148,43 @@ async function writeBase64Sliced(path, data, onProgress, isCancelled) {
  */
 
 /**
+ * Resolve a synchronous patch engine + apply it, emitting progress on the
+ * 'apply' phase. IPS/UPS take in-memory byte arrays (we report fraction of
+ * patch bytes consumed by the engine via the phase start/end boundary + a poll
+ * of isCancelled between engines); xdelta streams from URIs and carries its
+ * own chunked IO, so progress is reported only at phase boundaries here.
+ *
+ * @param {string} fmt
+ * @param {Uint8Array} romBytes
+ * @param {Uint8Array} patchBytes
+ * @param {string} romUri
+ * @param {string} patchUri
+ * @param {function(fraction:number, phase:string):void} onProgress
+ * @param {function():boolean} isCancelled
+ * @returns {Promise<{rom:Uint8Array, records:number}>}
+ */
+function applyEngine(fmt, romBytes, patchBytes, romUri, patchUri, onProgress, isCancelled) {
+  onProgress(0, 'apply');
+  if (isCancelled()) throw new CancelledError();
+  let result;
+  if (fmt === 'ips') {
+    result = applyIps(romBytes, patchBytes);
+  } else if (fmt === 'ups') {
+    result = applyUps(romBytes, patchBytes);
+  } else if (fmt === 'xdelta') {
+    // applyXdelta is URI-first streaming (bypasses whole-file base64 triple-buffer)
+    result = applyXdelta(romUri, patchUri);
+  } else {
+    throw new Error(
+      fmt.toUpperCase() + ' patching is not implemented yet (tracked as a work item). IPS, UPS, xdelta work today.'
+    );
+  }
+  if (isCancelled()) throw new CancelledError();
+  onProgress(1, 'apply');
+  return result;
+}
+
+/**
  * Apply a patch to a ROM.
  *
  * @param {Object} opts
@@ -164,12 +204,6 @@ export async function patchRom({ romUri, patchUri, hack, onProgress = noop, isCa
     throw new Error('Patching runs in the Android app only. The web preview is for browsing the catalog.');
   }
   const fmt = ((hack && hack.patchFormat) || 'ips').toLowerCase();
-  if (fmt !== 'ips') {
-    throw new Error(
-      fmt.toUpperCase() + ' patching is not implemented yet (tracked as a work item). IPS works today.'
-    );
-  }
-
   const outDir = FileSystem.documentDirectory + 'patched/';
   try {
     await FileSystem.makeDirectory(outDir, { intermediates: true });
@@ -179,20 +213,32 @@ export async function patchRom({ romUri, patchUri, hack, onProgress = noop, isCa
   const outPath = outDir + name;
 
   try {
+    // Verify the base ROM BEFORE reading the patch or writing any output.
+    // A wrong dump must abort early — no partial patched file is produced.
+    await verifyRom(romUri, (hack && hack.baseRomName) || '');
+
+    if (fmt === 'xdelta') {
+      // URI-first streaming path: the engine reads the ROM in chunks itself
+      // and never holds the full base64 representation in memory. We still
+      // run verifyRom first (above) and clean up on failure/cancel below.
+      const result = applyEngine(fmt, null, null, romUri, patchUri, onProgress, isCancelled);
+      const applied = await result;
+      await writeBase64Sliced(outPath, applied.rom, onProgress, isCancelled);
+      return { path: outPath, name, size: applied.rom.length, records: applied.records };
+    }
+
     // Phase 1: read ROM + patch in 1MB slices.
     const [romBytes, patchBytes] = await Promise.all([
       readBase64Sliced(romUri, onProgress, isCancelled, 'rom'),
       readBase64Sliced(patchUri, onProgress, isCancelled, 'patch'),
     ]);
 
-    // Phase 2: apply (in-memory, CPU-bound). Report forward progress within
-    // the patch bytes since applyIps walks them linearly.
-    const applied = applyIpsStreamed(romBytes, patchBytes, onProgress, isCancelled);
+    // Phase 2: apply (engine dispatch + phase progress).
+    const applied = applyEngine(fmt, romBytes, patchBytes, romUri, patchUri, onProgress, isCancelled);
 
     // Phase 3: write output in 1MB slices (streamed, no full double-buffer).
     await writeBase64Sliced(outPath, applied.rom, onProgress, isCancelled);
 
-    // Final progress tick to 1.0 across phases is emitted by writeBase64Sliced.
     return { path: outPath, name, size: applied.rom.length, records: applied.records };
   } catch (e) {
     // Clean up any partial output on cancel or failure so no stale file lingers.
@@ -203,24 +249,4 @@ export async function patchRom({ romUri, patchUri, hack, onProgress = noop, isCa
     try { await FileSystem.deleteAsync(outPath, { idempotent: true }); } catch (_) {}
     throw e;
   }
-}
-
-/**
- * Run applyIps while emitting progress on the 'apply' phase. applyIps walks the
- * patch bytes linearly, so we report fraction of patch bytes consumed. This
- * keeps the public patchRom signature stable and forward-compatible with the
- * streaming decision work item #3 will make (applyIps stays synchronous here;
- * #3 may swap in a streaming engine later without changing the API).
- */
-function applyIpsStreamed(romBytes, patchBytes, onProgress, isCancelled) {
-  // We cannot trivially stream the synchronous applyIps loop while it owns
-  // control; instead we report phase start + end and poll cancel at the
-  // boundary. The read/write phases carry the granular per-MB progress.
-  onProgress(0, 'apply');
-  const result = applyIps(romBytes, patchBytes);
-  if (isCancelled()) {
-    throw new CancelledError();
-  }
-  onProgress(1, 'apply');
-  return result;
 }
