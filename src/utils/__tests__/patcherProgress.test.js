@@ -65,6 +65,16 @@ jest.mock('react-native', () => ({
   Platform: { OS: 'android' },
 }));
 
+// Mock verifyRom so patcher-progress tests are decoupled from the base-ROM
+// manifest. These tests exercise patching progress/cancellation, not ROM
+// verification — using a fixture baseRomName ('base.gba') that is not in
+// BASE_ROMS. The real verifyRom (and its tests) live in verify.test.js.
+jest.mock('../verify', () => ({
+  verifyRom: jest.fn(async () => ({ size: 4, sha256: 'test' })),
+  formatVerifyError: jest.fn((e) => ({ title: 'PATCH FAILED', body: e.message })),
+  default: { verifyRom: jest.fn(async () => ({ size: 4, sha256: 'test' })) },
+}));
+
 const FileSystem = require('expo-file-system');
 const { patchRom, CancelledError } = require('../patcher');
 const { applyIps } = require('../ips');
