@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { applyIps } from './ips';
 import { applyUps } from './ups';
+import { applyBps } from './bps';
 import { applyXdelta } from './xdelta';
 import { base64ToBytes, bytesToBase64 } from './b64';
 import { verifyRom } from './verify';
@@ -149,7 +150,7 @@ async function writeBase64Sliced(path, data, onProgress, isCancelled) {
 
 /**
  * Resolve a synchronous patch engine + apply it, emitting progress on the
- * 'apply' phase. IPS/UPS take in-memory byte arrays (we report fraction of
+ * 'apply' phase. IPS/UPS/BPS take in-memory byte arrays (we report fraction of
  * patch bytes consumed by the engine via the phase start/end boundary + a poll
  * of isCancelled between engines); xdelta streams from URIs and carries its
  * own chunked IO, so progress is reported only at phase boundaries here.
@@ -171,12 +172,14 @@ function applyEngine(fmt, romBytes, patchBytes, romUri, patchUri, onProgress, is
     result = applyIps(romBytes, patchBytes);
   } else if (fmt === 'ups') {
     result = applyUps(romBytes, patchBytes);
+  } else if (fmt === 'bps') {
+    result = applyBps(romBytes, patchBytes);
   } else if (fmt === 'xdelta') {
     // applyXdelta is URI-first streaming (bypasses whole-file base64 triple-buffer)
     result = applyXdelta(romUri, patchUri);
   } else {
     throw new Error(
-      fmt.toUpperCase() + ' patching is not implemented yet (tracked as a work item). IPS, UPS, xdelta work today.'
+      fmt.toUpperCase() + ' patching is not implemented yet (tracked as a work item). IPS, UPS, BPS, xdelta work today.'
     );
   }
   if (isCancelled()) throw new CancelledError();
