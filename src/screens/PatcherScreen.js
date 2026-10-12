@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
-import { patchRom } from '../utils/patcher';
+import { patchRom, CancelledError } from '../utils/patcher';
+import { friendlyPatchError } from '../utils/patchErrors';
 import { formatVerifyError } from '../utils/verify';
 import { sharePatchedRom, openInEmulator } from '../utils/share';
 
@@ -40,6 +41,10 @@ export default function PatcherScreen({ route }) {
   const [error, setError] = useState(null);
   const [errorTitle, setErrorTitle] = useState('PATCH FAILED');
 
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState('read');
+  const cancelRef = useRef(false);
+
   // Clear any stale error when a new patchUri arrives.
   React.useEffect(() => {
     if (patchUri && !rom) {
@@ -51,9 +56,23 @@ export default function PatcherScreen({ route }) {
 
   const isWeb = Platform.OS === 'web';
   const fmt = (hack.patchFormat || 'ips').toLowerCase();
+  // All four formats are wired through the merged patchRom dispatch.
+  const canApply = !isWeb && (fmt === 'ips' || fmt === 'ups' || fmt === 'bps' || fmt === 'xdelta') && rom && patch && !busy;
   // When a patch was pre-downloaded, the user only needs to pick the ROM.
-  const canApply = !isWeb && (fmt === 'ips' || fmt === 'xdelta') && rom && patch && !busy;
   const patchPreselected = Boolean(patchUri);
+
+  function phaseLabel() {
+    switch (phase) {
+      case 'read':
+        return 'READING';
+      case 'apply':
+        return 'APPLYING';
+      case 'write':
+        return 'WRITING';
+      default:
+        return 'WORKING';
+    }
+  }
 
   async function pick(onSet) {
     setError(null);
@@ -63,24 +82,60 @@ export default function PatcherScreen({ route }) {
     }
   }
 
+  function resetProgress() {
+    setProgress(0);
+    setPhase('read');
+  }
+
   async function run() {
     setError(null);
+    setErrorTitle('PATCH FAILED');
     setResult(null);
     setBusy(true);
+    cancelRef.current = false;
+    resetProgress();
     try {
-      const out = await patchRom({ romUri: rom.uri, patchUri: patch.uri, hack });
+      const out = await patchRom({
+        romUri: rom.uri,
+        patchUri: patch.uri,
+        hack,
+        onProgress: (fraction, p) => {
+          setProgress(fraction);
+          if (p) setPhase(p);
+        },
+        isCancelled: () => cancelRef.current,
+      });
       setResult(out);
     } catch (e) {
-      const rendered = formatVerifyError(e);
-      setError(rendered.body);
-      setErrorTitle(rendered.title);
+      // CancelledError is a user action, not a failure — surface it cleanly.
+      if (e instanceof CancelledError) {
+        setError('Patching cancelled.');
+        setErrorTitle('CANCELLED');
+        return;
+      }
+      // Friendly mapping first; fall back to structured verify-error rendering.
+      const friendly = friendlyPatchError(e, hack);
+      if (friendly && friendly !== 'Unknown patch error') {
+        setError(friendly);
+        setErrorTitle('PATCH FAILED');
+      } else {
+        const rendered = formatVerifyError(e);
+        setError(rendered.body);
+        setErrorTitle(rendered.title);
+      }
     } finally {
       setBusy(false);
+      resetProgress();
     }
+  }
+
+  function cancel() {
+    cancelRef.current = true;
   }
 
   async function share() {
     setError(null);
+    setErrorTitle('SHARE FAILED');
     setBusy(true);
     try {
       await sharePatchedRom(result.path);
@@ -88,11 +143,13 @@ export default function PatcherScreen({ route }) {
       setError(e.message || String(e));
     } finally {
       setBusy(false);
+      resetProgress();
     }
   }
 
   async function openEmulator() {
     setError(null);
+    setErrorTitle('OPEN IN EMULATOR FAILED');
     setBusy(true);
     try {
       await openInEmulator(result.path);
@@ -100,12 +157,14 @@ export default function PatcherScreen({ route }) {
       setError(e.message || String(e));
     } finally {
       setBusy(false);
+      resetProgress();
     }
   }
 
-  // Only show the "not yet implemented" warning for formats that are neither
-  // IPS nor xdelta (e.g. BPS, UPS).
-  const showNotImplementedWarning = fmt !== 'ips' && fmt !== 'xdelta';
+  // Only show the "not yet implemented" warning for formats this patcher does
+  // not dispatch. BPS is dispatched (tracked as #1, merged into main) so it is
+  // enabled here along with UPS/xdelta. e.g. any future format not yet wired.
+  const showNotImplementedWarning = fmt !== 'ips' && fmt !== 'ups' && fmt !== 'bps' && fmt !== 'xdelta';
 
   // NDS-specific hint for large ROMs
   const isNds = hack.platform === 'NDS' || fmt === 'xdelta';
@@ -128,7 +187,7 @@ export default function PatcherScreen({ route }) {
       {showNotImplementedWarning ? (
         <View style={s.warnBox}>
           <Text style={s.warnText}>
-            {fmt.toUpperCase()} support is still in development. IPS hacks work today — this one is tracked as a work item.
+            {fmt.toUpperCase()} support is still in development. IPS, UPS, and xdelta hacks work today — this one is tracked as a work item.
           </Text>
         </View>
       ) : null}
@@ -147,7 +206,7 @@ export default function PatcherScreen({ route }) {
         hint="A clean dump of the game this hack is built on"
         file={rom}
         onPick={() => pick(setRom)}
-        disabled={isWeb}
+        disabled={isWeb || busy}
       />
       <FileRow
         number="2"
@@ -155,12 +214,26 @@ export default function PatcherScreen({ route }) {
         hint={patchPreselected ? 'Patch downloaded — ready to apply' : "Downloaded from the hack's project page"}
         file={patch}
         onPick={() => pick(setPatch)}
-        disabled={isWeb}
+        disabled={isWeb || busy}
       />
 
       <TouchableOpacity style={[s.applyButton, !canApply && s.applyDisabled]} onPress={run} disabled={!canApply}>
         <Text style={s.applyText}>{busy ? 'PATCHING...' : 'APPLY PATCH'}</Text>
       </TouchableOpacity>
+
+      {busy ? (
+        <View style={s.progressRow}>
+          <Text style={s.phaseText}>{phaseLabel()} {Math.round(progress * 100)}%</Text>
+          <TouchableOpacity style={s.cancelButton} onPress={cancel}>
+            <Text style={s.cancelText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+      {busy ? (
+        <View style={s.progressTrack}>
+          <View style={[s.progressBar, { width: `${progress * 100}%` }]} />
+        </View>
+      ) : null}
 
       {error ? (
         <View style={s.errorBox}>
@@ -221,6 +294,12 @@ const s = StyleSheet.create({
   applyButton: { backgroundColor: COLORS.primary, borderRadius: RADIUS.md, alignItems: 'center', paddingVertical: 16, marginTop: SPACING.md },
   applyDisabled: { opacity: 0.35 },
   applyText: { color: '#0a0a0f', fontFamily: FONT.pixel, fontSize: 10 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.md, justifyContent: 'space-between' },
+  phaseText: { color: COLORS.textSub, fontFamily: FONT.body, fontSize: 13 },
+  cancelButton: { backgroundColor: COLORS.errorDim, borderColor: COLORS.error, borderWidth: 1, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, paddingVertical: 6 },
+  cancelText: { color: COLORS.error, fontFamily: FONT.pixel, fontSize: 9 },
+  progressTrack: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADIUS.md, height: 10, marginTop: SPACING.sm, overflow: 'hidden' },
+  progressBar: { backgroundColor: COLORS.primary, height: '100%' },
   errorBox: { backgroundColor: COLORS.errorDim, borderColor: COLORS.error, borderWidth: 1, borderRadius: RADIUS.md, padding: SPACING.md, marginTop: SPACING.lg },
   errorTitle: { color: COLORS.error, fontFamily: FONT.pixel, fontSize: 9 },
   errorBody: { color: COLORS.textSub, fontFamily: FONT.body, fontSize: 13, marginTop: SPACING.sm },
