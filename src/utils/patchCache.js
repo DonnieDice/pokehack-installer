@@ -1,1 +1,117 @@
-﻿/** * Patch cache: fetch + verify + content-addressed caching of ROM hack * patch files on device. * * The cache directory is:  ${FileSystem.cacheDirectory}patches/ * Cached files are named:  ${sha256}.ips * * On cache hit the cached file's bytes are re-verified against the * expected hash so byte rot cannot silently poison a patch. * * On web (where expo-file-system/legacy is unavailable) every operation * degrades to a safe no-op and the download URL is returned as-is so the * browser can stream-patch directly. */import { sha256 } from './sha256';import { base64ToBytes } from './b64';// expo-file-system is only available in native app containers.// On web / in the Jest test environment we fall back to no caching.let FileSystem;try {  // eslint-disable-next-line global-require  FileSystem = require('expo-file-system');} catch {  FileSystem = null;}const patchCacheDir = () => `${FileSystem.cacheDirectory}patches/`;/** * @param {string} url          - Direct HTTPS URL to the patch file. * @param {string} expectedSHA256 - Lowercase hex SHA-256 of the expected file. * @returns {Promise<string>}   - file:// URI of the verified cached patch, *                                or the original `url` when caching is not *                                available (web). * @throws {Error}              - On hash mismatch, network failure, or bad input. */export async function getCachedPatch(url, expectedSHA256) {  if (typeof url !== 'string' || !url.startsWith('https://')) {    throw new Error('getCachedPatch: url must be an HTTPS string');  }  const hex = typeof expectedSHA256 === 'string'    ? expectedSHA256.trim().toLowerCase()    : '';  if (    typeof expectedSHA256 !== 'string' ||    !/^[0-9a-fA-F]{64}$/.test(expectedSHA256.trim())  ) {    throw new Error(      'getCachedPatch: expectedSHA256 must be a 64-char hex SHA-256'    );  }  // Web / test environment without a native filesystem: return URL.  if (!FileSystem || typeof FileSystem.cacheDirectory !== 'string') {    return url;  }  const cacheDir = patchCacheDir();  const fileUri = `${cacheDir}${hex}.ips`;  // Ensure the cache directory exists.  await FileSystem.makeDirectoryAsync(cacheDir, { intermediates: true });  // Cache hit - re-verify bytes.  const existing = await FileSystem.getInfoAsync(fileUri);  if (existing.exists) {    const cachedB64 = await FileSystem.readAsStringAsync(fileUri, {      encoding: FileSystem.EncodingType.Base64,    });    const cachedHex = sha256(base64ToBytes(cachedB64));    if (cachedHex === hex) {      return fileUri;    }    // Byte rot: delete and fall through to re-download.    await FileSystem.deleteAsync(fileUri, { idempotent: true });  }  // Download.  const { status } = await FileSystem.downloadAsync(url, fileUri);  if (status !== 200) {    await FileSystem.deleteAsync(fileUri, { idempotent: true });    throw new Error(`Download failed with HTTP status ${status}`);  }  // Verify.  const b64 = await FileSystem.readAsStringAsync(fileUri, {    encoding: FileSystem.EncodingType.Base64,  });  const downloadedHex = sha256(base64ToBytes(b64));  if (downloadedHex !== hex) {    await FileSystem.deleteAsync(fileUri, { idempotent: true });    throw new Error(      `Patch integrity check failed after download (got ${downloadedHex.slice(0, 12)}...)`    );  }  return fileUri;}/** * Remove every cached patch. * Safe no-op when there is no native filesystem. * * @returns {Promise<void>} */export async function clearPatchCache() {  if (!FileSystem || typeof FileSystem.cacheDirectory !== 'string') {    return;  }  try {    const cacheDir = patchCacheDir();    await FileSystem.deleteAsync(cacheDir, { idempotent: true });  } catch {    // Directory already missing: no-op.  }}
+/**
+ * Patch cache: fetch + verify + content-addressed caching of ROM hack
+ * patch files on device.
+ *
+ * The cache directory is:  ${FileSystem.cacheDirectory}patches/
+ * Cached files are named:  ${sha256}.ips
+ *
+ * On cache hit the cached file's bytes are re-verified against the
+ * expected hash so byte rot cannot silently poison a patch.
+ *
+ * On web (where expo-file-system/legacy is unavailable) every operation
+ * degrades to a safe no-op and the download URL is returned as-is so the
+ * browser can stream-patch directly.
+ */
+import { sha256 } from './sha256';
+import { base64ToBytes } from './b64';
+
+// expo-file-system is only available in native app containers.
+// On web / in the Jest test environment we fall back to no caching.
+let FileSystem;
+try {
+  // eslint-disable-next-line global-require
+  FileSystem = require('expo-file-system');
+} catch {
+  FileSystem = null;
+}
+
+const patchCacheDir = () => `${FileSystem.cacheDirectory}patches/`;
+
+/**
+ * @param {string} url          - Direct HTTPS URL to the patch file.
+ * @param {string} expectedSHA256 - Lowercase hex SHA-256 of the expected file.
+ * @returns {Promise<string>}   - file:// URI of the verified cached patch,
+ *                                or the original `url` when caching is not
+ *                                available (web).
+ * @throws {Error}              - On hash mismatch, network failure, or bad input.
+ */
+export async function getCachedPatch(url, expectedSHA256) {
+  if (typeof url !== 'string' || !url.startsWith('https://')) {
+    throw new Error('getCachedPatch: url must be an HTTPS string');
+  }
+  const hex = typeof expectedSHA256 === 'string'
+    ? expectedSHA256.trim().toLowerCase()
+    : '';
+  if (
+    typeof expectedSHA256 !== 'string' ||
+    !/^[0-9a-fA-F]{64}$/.test(expectedSHA256.trim())
+  ) {
+    throw new Error(
+      'getCachedPatch: expectedSHA256 must be a 64-char hex SHA-256'
+    );
+  }
+
+  // Web / test environment without a native filesystem: return URL.
+  if (!FileSystem || typeof FileSystem.cacheDirectory !== 'string') {
+    return url;
+  }
+
+  const cacheDir = patchCacheDir();
+  const fileUri = `${cacheDir}${hex}.ips`;
+
+  // Ensure the cache directory exists.
+  await FileSystem.makeDirectoryAsync(cacheDir, { intermediates: true });
+
+  // Cache hit - re-verify bytes.
+  const existing = await FileSystem.getInfoAsync(fileUri);
+  if (existing.exists) {
+    const cachedB64 = await FileSystem.readAsStringAsync(fileUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const cachedHex = sha256(base64ToBytes(cachedB64));
+    if (cachedHex === hex) {
+      return fileUri;
+    }
+    // Byte rot: delete and fall through to re-download.
+    await FileSystem.deleteAsync(fileUri, { idempotent: true });
+  }
+
+  // Download.
+  const { status } = await FileSystem.downloadAsync(url, fileUri);
+  if (status !== 200) {
+    await FileSystem.deleteAsync(fileUri, { idempotent: true });
+    throw new Error(`Download failed with HTTP status ${status}`);
+  }
+
+  // Verify.
+  const b64 = await FileSystem.readAsStringAsync(fileUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const downloadedHex = sha256(base64ToBytes(b64));
+  if (downloadedHex !== hex) {
+    await FileSystem.deleteAsync(fileUri, { idempotent: true });
+    throw new Error(
+      `Patch integrity check failed after download (got ${downloadedHex.slice(0, 12)}...)`
+    );
+  }
+
+  return fileUri;
+}
+
+/**
+ * Remove every cached patch.
+ * Safe no-op when there is no native filesystem.
+ *
+ * @returns {Promise<void>}
+ */
+export async function clearPatchCache() {
+  if (!FileSystem || typeof FileSystem.cacheDirectory !== 'string') {
+    return;
+  }
+  try {
+    const cacheDir = patchCacheDir();
+    await FileSystem.deleteAsync(cacheDir, { idempotent: true });
+  } catch {
+    // Directory already missing: no-op.
+  }
+}
