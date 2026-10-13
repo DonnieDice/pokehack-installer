@@ -57,7 +57,7 @@ android-debug-apk:
     # Patch the prebuild-generated build.gradle so debug artifacts are no
     # longer traps: give debug its own applicationId so a debug install can
     # never signature-conflict with the release app or shadow its launcher
-    # icon. (RN 0.73's react{} DSL has no bundleInDebug equivalent; debug
+    # icon. (RN 0.73's react{} DSL has no in-debug-bundle equivalent; debug
     # builds remain Metro-only, which is standard RN dev behavior - and with
     # a distinct package id they can no longer masquerade as the release app.)
     # Root cause of the standalone-APK launch saga (issues #21/#23/#24):
@@ -83,6 +83,11 @@ android-debug-apk:
       print('debug build patched: applicationIdSuffix=debug')
       PYEOF
     - cd android && ./gradlew assembleDebug --no-daemon
+    # Packaging regression guard (#23): fail the build if the debug APK ever
+    # regresses to the SAME application id as the signed release app (the
+    # delivered job 53192 artifact did, causing signature conflicts and the
+    # "Unable to load script" standalone surface; see #21/#23/#24).
+    - python3 scripts/verify-apk-packaging.py --mode debug android/app/build/outputs/apk/debug/*.apk
   artifacts:
     name: "apk-${CI_COMMIT_SHORT_SHA}"
     paths:
@@ -182,6 +187,12 @@ android-release-apk:
       print('release signing config injected into ' + path)
       PYEOF
     - cd android && ./gradlew assembleRelease --no-daemon
+    # Packaging regression guard (#23): fail the build if the release APK ever
+    # ships without the embedded JS bundle (a Metro-less standalone install
+    # then cannot start), with a degenerate/wrong-id bundle, or accidentally
+    # carrying the .debug suffix. The delivered release job 53200 artifact
+    # passed these checks; this locks them in for every future main build.
+    - python3 scripts/verify-apk-packaging.py --mode release android/app/build/outputs/apk/release/*.apk
   artifacts:
     name: "release-apk-${CI_COMMIT_SHORT_SHA}"
     paths:
