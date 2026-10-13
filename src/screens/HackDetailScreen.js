@@ -23,12 +23,13 @@ function downloadSearchUrl(title) {
 
 export default function HackDetailScreen({ route }) {
   const insets = useSafeAreaInsets();
+  const [remoteFailed, setRemoteFailed] = React.useState(false);
   const hack = route.params.hack;
   const platformColor = PLATFORM_COLORS[hack.platform] || COLORS.primary;
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
   const accent = hack.accentColor || platformColor;
-  const cover = COVERS[hack.id];
-
+  const localCover = COVERS[hack.id];
+  const heroSource = hack.coverUrl && !remoteFailed ? { uri: hack.coverUrl } : localCover;
   return (
     <ScrollView
       style={s.root}
@@ -38,8 +39,13 @@ export default function HackDetailScreen({ route }) {
         paddingBottom: SPACING.xxl + insets.bottom,
       }}
     >
-      {cover ? (
-        <Image source={cover} style={s.heroCover} resizeMode="cover" />
+      {heroSource ? (
+        <Image
+          source={heroSource}
+          style={s.heroCover}
+          resizeMode="cover"
+          onError={() => setRemoteFailed(true)}
+        />
       ) : (
         <View style={[s.hero, { backgroundColor: accent }]} />
       )}

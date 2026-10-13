@@ -17,4 +17,9 @@ export const COVERS = {
   'polished-crystal': require('../../assets/covers/polished-crystal.png'),
   'pokemon-orange': require('../../assets/covers/pokemon-orange.png'),
   'roaring-red': require('../../assets/covers/roaring-red.png'),
+  'flora-sky': require('../../assets/covers/flora-sky.png'),
+  'mega-power': require('../../assets/covers/mega-power.png'),
+  vega: require('../../assets/covers/vega.png'),
+  'super-gold-97': require('../../assets/covers/super-gold-97.png'),
+  'mind-crystal': require('../../assets/covers/mind-crystal.png'),
 };

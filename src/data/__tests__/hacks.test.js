@@ -7,8 +7,8 @@ const { HACKS, PLATFORMS, TAGS } = require('../hacks');
 const { COVERS } = require('../covers');
 
 describe('catalog', () => {
-  test('has at least 16 hacks', () => {
-    expect(HACKS.length).toBeGreaterThanOrEqual(16);
+  test('has at least 21 hacks', () => {
+    expect(HACKS.length).toBeGreaterThanOrEqual(21);
   });
 
   test('every hack has unique ids', () => {
@@ -28,6 +28,19 @@ describe('catalog', () => {
         throw new Error(h.id + ' projectUrl is not a valid URL: ' + h.projectUrl);
       }
     }
+  });
+
+  test('remote cover art urls are valid https when present', () => {
+    let withCover = 0;
+    for (const h of HACKS) {
+      if (h.coverUrl !== undefined) {
+        expect(h.coverUrl.startsWith('https://')).toBe(true);
+        expect(() => new URL(h.coverUrl)).not.toThrow();
+        withCover++;
+      }
+    }
+    // The large majority of the catalog must carry real remote cover art.
+    expect(withCover).toBeGreaterThanOrEqual(Math.floor(HACKS.length * 0.7));
   });
 
   test('every hack has the required catalog fields', () => {

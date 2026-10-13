@@ -41,6 +41,14 @@ describe('emulators', () => {
     }
   });
 
+  test('most emulators carry a Play Store CDN icon', () => {
+    const withIcon = EMULATORS.filter((e) => e.iconUrl);
+    expect(withIcon.length).toBeGreaterThanOrEqual(8);
+    for (const e of withIcon) {
+      expect(e.iconUrl.startsWith('https://play-lh.googleusercontent.com/')).toBe(true);
+    }
+  });
+
   test('covers every platform in the catalog (GBA, GBC, NDS, SNES)', () => {
     const covered = new Set();
     for (const e of EMULATORS) {
