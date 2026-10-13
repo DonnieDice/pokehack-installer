@@ -1,20 +1,24 @@
 # TODO — PokeHack Installer
 
-## M1 — On-device patching alpha
-- [x] Project bootstrapped on GitLab with CI (web bundle + debug APK artifacts)
-- [x] IPS patch engine (unit tested)
-- [ ] BPS patch support (Emerald Rogue, Crystal Clear use BPS)
-- [ ] UPS patch support (Unbound, Gaia use UPS)
-- [ ] xdelta support for NDS hacks (Blaze Black 2)
-- [ ] Base ROM verification (file size + SHA-256 against baseRomName)
-- [ ] In-app patch downloads (verified URLs per hack; catalog currently has projectUrl only)
-- [ ] Patcher UX: progress percent, cancel, friendlier error mapping
-- [ ] Share/open patched ROM from the app (expo-sharing)
-- [ ] Real app icons + splash (1x1 placeholders currently shipped)
+## M1 — Catalog app
+- [x] Project bootstrapped on GitLab with CI (web bundle + debug/release APK artifacts)
+- [x] Catalog browse + hack detail screens
+- [x] Cover art on cards and detail pages (original generated pixel art)
+- [x] Safe-area handling so content clears the status bar
+- [x] Sort options (rating / A-Z / difficulty / platform) + platform filters
+- [x] Emulators page with Play Store links per platform
+- [x] "Find download" opens a web search instead of in-app patching
+- [x] Debug APKs embed the JS bundle + use a `.debug` package suffix (no more
+      standalone-launch traps or signature conflicts with release installs)
+- [x] Release APK cold-launches standalone (verified on-device: Pixel 6 / Android 17)
 
-## M2 — Installer polish
-- [ ] Patched-ROM library with rename/share/export
-- [ ] Updates feed for actively-developed hacks (Emerald Rogue, Adventure Red)
-- [ ] Emulator handoff (open patched ROM in the user's emulator)
-- [ ] Signed release APK in CI (debug-only today)
-- [ ] Catalog expansion beyond the current 10 hacks
+## M2 — Catalog polish
+- [ ] More hacks: keep researching verified pages (NDS and GBC catalogs are thin)
+- [ ] Per-hack screenshots gallery
+- [ ] Emulator handoff: open a downloaded ROM in the installed emulator
+- [ ] Catalog expansion beyond Pokémon (Mario, Zelda, Metroid hacks?)
+- [ ] iOS port (separate repo)
+
+## Parked
+- On-device patch engines (IPS/UPS/BPS/xdelta) live in src/utils with passing
+  tests but no longer wired to any UI. Re-enable if patching ever returns.

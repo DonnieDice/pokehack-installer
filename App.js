@@ -16,7 +16,7 @@ import { PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
 
 import HomeScreen from './src/screens/HomeScreen';
 import HackDetailScreen from './src/screens/HackDetailScreen';
-import PatcherScreen from './src/screens/PatcherScreen';
+import EmulatorsScreen from './src/screens/EmulatorsScreen';
 import { COLORS } from './src/theme';
 
 const Stack = createNativeStackNavigator();
@@ -52,7 +52,7 @@ export default function App() {
           >
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="HackDetail" component={HackDetailScreen} />
-            <Stack.Screen name="Patcher" component={PatcherScreen} />
+            <Stack.Screen name="Emulators" component={EmulatorsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

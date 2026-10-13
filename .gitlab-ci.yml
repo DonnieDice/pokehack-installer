@@ -51,6 +51,41 @@ android-debug-apk:
   script:
     - npm install --no-audit --no-fund
     - npx expo prebuild -p android --no-install
+    # Patch the prebuild-generated build.gradle so debug artifacts are no
+    # longer traps: (a) embed the JS bundle in debug builds so they launch
+    # standalone without Metro, and (b) give debug its own applicationId so a
+    # debug install can never signature-conflict with the release app.
+    # Root cause of the standalone-APK launch saga (issues #21/#23/#24):
+    # the operator installed the bundle-less debug APK, later release installs
+    # failed silently on the signature mismatch, and the old debug app kept
+    # showing "Unable to load script". Same patch style as the release job.
+    - |
+      python3 - <<'PYEOF'
+      import sys
+      path = 'android/app/build.gradle'
+      with open(path) as f:
+          gradle = f.read()
+      react_anchor = 'react {\n'
+      if react_anchor not in gradle:
+          sys.exit('FATAL: expected react {} block not found in ' + path)
+      if 'bundleInDebug' not in gradle:
+          gradle = gradle.replace(
+              react_anchor,
+              react_anchor + '    // Embed the JS bundle in debug builds (standalone install works without Metro)\n'
+              '    bundleInDebug = true\n',
+              1)
+      debug_anchor = 'debug {\n            signingConfig signingConfigs.debug'
+      if debug_anchor not in gradle:
+          sys.exit('FATAL: expected debug buildType signingConfig line not found in ' + path)
+      if 'applicationIdSuffix' not in gradle:
+          gradle = gradle.replace(
+              debug_anchor,
+              'debug {\n            applicationIdSuffix "debug"\n            signingConfig signingConfigs.debug',
+              1)
+      with open(path, 'w') as f:
+          f.write(gradle)
+      print('debug build patched: bundleInDebug=true, applicationIdSuffix=debug')
+      PYEOF
     - cd android && ./gradlew assembleDebug --no-daemon
   artifacts:
     name: "apk-${CI_COMMIT_SHORT_SHA}"

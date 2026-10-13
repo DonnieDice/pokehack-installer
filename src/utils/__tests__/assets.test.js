@@ -108,4 +108,46 @@ describe('assets', () => {
       }
     }
   });
+
+  test('every catalog hack has a 480x270 RGBA cover under 100KB', () => {
+    const { HACKS } = require('../../data/hacks');
+    for (const h of HACKS) {
+      const p = path.join(__dirname, '..', '..', '..', 'assets', 'covers', `${h.id}.png`);
+      const { width, height, bitDepth, colorType, data } = readPng(p);
+      expect(width).toBe(480);
+      expect(height).toBe(270);
+      expect(bitDepth).toBe(8);
+      expect(colorType).toBe(6);
+      expect(data.length).toBeLessThan(102400);
+    }
+  });
+
+  test('covers are fully opaque (no transparent pixels in title-safe zone)', () => {
+    const { HACKS } = require('../../data/hacks');
+    for (const h of HACKS) {
+      const p = path.join(__dirname, '..', '..', '..', 'assets', 'covers', `${h.id}.png`);
+      const { data } = readPng(p);
+      let offset = 8;
+      let idat = Buffer.alloc(0);
+      while (offset < data.length) {
+        const len = data.readUInt32BE(offset);
+        const type = data.slice(offset + 4, offset + 8).toString();
+        if (type === 'IDAT') {
+          idat = Buffer.concat([idat, data.slice(offset + 8, offset + 8 + len)]);
+        }
+        offset += 12 + len;
+      }
+      const raw = zlib.inflateSync(idat);
+      const stride = 480 * 4 + 1;
+      // Spot-check alpha across the image; every pixel must be opaque.
+      for (let y = 0; y < 270; y += 5) {
+        for (let x = 0; x < 480; x += 5) {
+          const i = y * stride + x * 4 + 4;
+          if (raw[i] !== 0xff) {
+            throw new Error(`${h.id}.png has transparent pixel at ${x},${y}`);
+          }
+        }
+      }
+    }
+  });
 });

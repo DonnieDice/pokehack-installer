@@ -1,7 +1,9 @@
 import React from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'react-native';
 import { COLORS, DIFFICULTY_COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
-import { getCachedPatch } from '../utils/patchCache';
+import { COVERS } from '../data/covers';
 
 function Info({ label, value, color }) {
   return (
@@ -14,32 +16,33 @@ function Info({ label, value, color }) {
   );
 }
 
-export default function HackDetailScreen({ navigation, route }) {
+function downloadSearchUrl(title) {
+  // Open a web search for an active download instead of linking one directly.
+  return 'https://www.google.com/search?q=' + encodeURIComponent(title + ' ROM hack download');
+}
+
+export default function HackDetailScreen({ route }) {
+  const insets = useSafeAreaInsets();
   const hack = route.params.hack;
   const platformColor = PLATFORM_COLORS[hack.platform] || COLORS.primary;
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
   const accent = hack.accentColor || platformColor;
-
-  const [downloading, setDownloading] = React.useState(false);
-
-  const canDownload = typeof hack.patchUrl === 'string' && hack.patchUrl.startsWith('https://');
-
-  async function handleDownloadPatch() {
-    if (!hack.patchUrl || !hack.patchSha256) return;
-    setDownloading(true);
-    try {
-      const patchUri = await getCachedPatch(hack.patchUrl, hack.patchSha256);
-      navigation.navigate('Patcher', { hack, patchUri });
-    } catch (err) {
-      Alert.alert('Patch Download Failed', err.message || String(err));
-    } finally {
-      setDownloading(false);
-    }
-  }
+  const cover = COVERS[hack.id];
 
   return (
-    <ScrollView style={s.root} contentContainerStyle={{ padding: SPACING.md, paddingBottom: SPACING.xxl }}>
-      <View style={[s.hero, { backgroundColor: accent }]} />
+    <ScrollView
+      style={s.root}
+      contentContainerStyle={{
+        padding: SPACING.md,
+        paddingTop: SPACING.md + insets.top,
+        paddingBottom: SPACING.xxl + insets.bottom,
+      }}
+    >
+      {cover ? (
+        <Image source={cover} style={s.heroCover} resizeMode="cover" />
+      ) : (
+        <View style={[s.hero, { backgroundColor: accent }]} />
+      )}
       <Text style={s.title}>{hack.title}</Text>
       <Text style={s.subtitle}>{hack.subtitle}</Text>
       <View style={s.tagRow}>
@@ -53,9 +56,9 @@ export default function HackDetailScreen({ navigation, route }) {
         <Info label="PLATFORM" value={hack.platform} color={platformColor} />
         <Info label="BASE GAME" value={hack.baseGame} />
         <Info label="DIFFICULTY" value={hack.difficulty} color={difficultyColor} />
-        <Info label="PATCH FORMAT" value={hack.patchFormat.toUpperCase()} />
         <Info label="LENGTH" value={hack.hours} />
         <Info label="RATING" value={hack.rating.toFixed(1) + ' / 10'} />
+        <Info label="STATUS" value={hack.completed ? 'Complete' : 'In progress'} color={hack.completed ? COLORS.success : COLORS.warning} />
       </View>
 
       <Text style={s.section}>THE HACK</Text>
@@ -69,31 +72,20 @@ export default function HackDetailScreen({ navigation, route }) {
         </View>
       ))}
 
-      <Text style={s.section}>EXPECTED BASE ROM</Text>
-      <Text style={s.romName}>{hack.baseRomName}</Text>
+      <TouchableOpacity
+        style={[s.findButton, { backgroundColor: accent }]}
+        onPress={() => Linking.openURL(downloadSearchUrl(hack.title))}
+      >
+        <Text style={[s.findButtonText, { color: '#0a0a0f' }]}>FIND DOWNLOAD</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(hack.projectUrl)}>
         <Text style={s.linkButtonText}>OPEN PROJECT PAGE</Text>
       </TouchableOpacity>
 
-      {canDownload ? (
-        <TouchableOpacity
-          style={[s.downloadButton, downloading && s.buttonDisabled]}
-          onPress={handleDownloadPatch}
-          disabled={downloading}
-        >
-          <Text style={s.downloadButtonText}>
-            {downloading ? 'DOWNLOADING…' : 'DOWNLOAD PATCH'}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
-
-      <TouchableOpacity style={[s.patchButton, { backgroundColor: accent }]} onPress={() => navigation.navigate('Patcher', { hack })}>
-        <Text style={s.patchButtonText}>PATCH YOUR ROM</Text>
-      </TouchableOpacity>
-
       <Text style={s.legal}>
-        Patch your own legally-obtained ROM dump only. The app never distributes copyrighted game files.
+        This app does not host or distribute any game files. Download links come from a web search
+        you run yourself — only download content you have the legal right to own.
       </Text>
     </ScrollView>
   );
@@ -101,6 +93,12 @@ export default function HackDetailScreen({ navigation, route }) {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
+  heroCover: {
+    width: '100%',
+    aspectRatio: 480 / 270,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
   hero: { height: 6, borderRadius: RADIUS.full, marginBottom: SPACING.md },
   title: { color: COLORS.text, fontFamily: FONT.pixel, fontSize: 15, lineHeight: 24 },
   subtitle: { color: COLORS.textSub, fontFamily: FONT.body, fontSize: 14, marginTop: SPACING.xs },
@@ -126,36 +124,16 @@ const s = StyleSheet.create({
   featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm },
   featureDot: { width: 6, height: 6, borderRadius: 3, marginRight: SPACING.sm },
   feature: { color: COLORS.text, fontFamily: FONT.body, fontSize: 14, flex: 1 },
-  romName: {
-    color: COLORS.warning,
-    fontFamily: FONT.bodySemi,
-    fontSize: 13,
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-  },
+  findButton: { alignItems: 'center', borderRadius: RADIUS.md, paddingVertical: 16, marginTop: SPACING.xl },
+  findButtonText: { fontFamily: FONT.pixel, fontSize: 10 },
   linkButton: {
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
     paddingVertical: 14,
-    marginTop: SPACING.xl,
-  },
-  linkButtonText: { color: COLORS.textSub, fontFamily: FONT.pixel, fontSize: 9 },
-  downloadButton: {
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.success,
-    borderRadius: RADIUS.md,
-    paddingVertical: 16,
     marginTop: SPACING.md,
   },
-  downloadButtonText: { color: COLORS.success, fontFamily: FONT.pixel, fontSize: 10 },
-  buttonDisabled: { opacity: 0.5 },
-  patchButton: { alignItems: 'center', borderRadius: RADIUS.md, paddingVertical: 16, marginTop: SPACING.md },
-  patchButtonText: { color: '#0a0a0f', fontFamily: FONT.pixel, fontSize: 10 },
+  linkButtonText: { color: COLORS.textSub, fontFamily: FONT.pixel, fontSize: 9 },
   legal: { color: COLORS.textMuted, fontFamily: FONT.body, fontSize: 11, textAlign: 'center', marginTop: SPACING.lg },
 });
