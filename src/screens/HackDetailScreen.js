@@ -60,7 +60,10 @@ export default function HackDetailScreen({ route }) {
         <Info label="BASE GAME" value={hack.baseGame || 'Not verified'} />
         {hack.difficulty ? <Info label="DIFFICULTY" value={hack.difficulty} color={difficultyColor} /> : null}
         {hack.hours ? <Info label="LENGTH" value={hack.hours} /> : null}
-        <Info label="STATUS" value={statusLabel(hack)} color={hack.status === 'completed' || hack.completed === true ? COLORS.success : COLORS.textSub} />
+        {hack.rating ? <Info label="RATING" value={hack.rating.toFixed(1) + ' / 10'} /> : null}
+        {statusLabel(hack) ? (
+          <Info label="STATUS" value={statusLabel(hack)} color={hack.status === 'completed' || hack.completed === true ? COLORS.success : COLORS.textSub} />
+        ) : null}
       </View>
 
       <Text style={s.section}>THE HACK</Text>
@@ -68,10 +71,10 @@ export default function HackDetailScreen({ route }) {
       <Text style={s.legal}>
         {hasReviewedProject(hack)
           ? `Project source checked ${hack.verifiedAt}. This is not rights clearance or a guarantee of a playable release.`
-          : 'Historical listing: description and project destination still need source review.'}
+          : 'Community-sourced listing: details and project destination are still being reviewed.'}
       </Text>
 
-      {hasReviewedProject(hack) && hack.features && hack.features.length ? (
+      {hack.features && hack.features.length ? (
         <>
           <Text style={s.section}>FEATURES</Text>
           {hack.features.map((f) => (
@@ -85,16 +88,14 @@ export default function HackDetailScreen({ route }) {
 
       <TouchableOpacity
         style={[s.findButton, { backgroundColor: accent }]}
-        onPress={() => Linking.openURL(hasReviewedProject(hack) ? hack.projectUrl : projectSearchUrl(hack))}
+        onPress={() => Linking.openURL(hack.projectUrl)}
       >
-        <Text style={[s.findButtonText, { color: '#050810' }]}>{hasReviewedProject(hack) ? 'OPEN PROJECT PAGE' : 'FIND CREATOR PROJECT'}</Text>
+        <Text style={[s.findButtonText, { color: '#050810' }]}>OPEN PROJECT PAGE</Text>
       </TouchableOpacity>
 
-      {hasReviewedProject(hack) ? (
-        <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(patchSearchUrl(hack))}>
-          <Text style={s.linkButtonText}>FIND PATCH</Text>
-        </TouchableOpacity>
-      ) : null}
+      <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(patchSearchUrl(hack))}>
+        <Text style={s.linkButtonText}>FIND DOWNLOAD</Text>
+      </TouchableOpacity>
 
       <Text style={s.legal}>
         Independent discovery catalog; not affiliated with Nintendo, The Pokémon Company, or GAME FREAK.

@@ -28,7 +28,11 @@ export default function HackCard({ hack, onPress }) {
           <Text style={s.title} numberOfLines={1}>
             {hack.title}
           </Text>
-          <Text style={hack.status === 'completed' || hack.completed === true ? s.done : s.wip}>{statusLabel(hack).toUpperCase()}</Text>
+          {statusLabel(hack) ? (
+            <Text style={hack.status === 'completed' || hack.completed === true ? s.done : s.wip}>
+              {statusLabel(hack).toUpperCase()}
+            </Text>
+          ) : null}
         </View>
         <Text style={s.subtitle} numberOfLines={1}>
           {hack.subtitle}
@@ -37,11 +41,14 @@ export default function HackCard({ hack, onPress }) {
           <Text style={[s.platform, { color: platformColor, borderColor: platformColor }]}>
             {hack.platform}
           </Text>
-           {hack.difficulty ? <View style={s.difficulty}>
-            <View style={[s.dot, { backgroundColor: difficultyColor }]} />
-            <Text style={s.difficultyText}>{hack.difficulty}</Text>
-           </View> : null}
-           {hack.hours ? <Text style={s.meta}>{hack.hours}</Text> : null}
+          {hack.difficulty ? (
+            <View style={s.difficulty}>
+              <View style={[s.dot, { backgroundColor: difficultyColor }]} />
+              <Text style={s.difficultyText}>{hack.difficulty}</Text>
+            </View>
+          ) : null}
+          {hack.hours ? <Text style={s.meta}>{hack.hours}</Text> : null}
+          {hack.rating ? <Text style={s.rating}>{hack.rating.toFixed(1)}</Text> : null}
         </View>
       </View>
     </TouchableOpacity>
