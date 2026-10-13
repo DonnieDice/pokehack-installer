@@ -1,4 +1,9 @@
-export const HACKS = [
+import candidates from './catalog-candidates.json';
+import { buildCatalog } from '../utils/buildCatalog';
+
+// Historical entries remain for discovery, but unsourced estimates and links
+// must not be presented as reviewed facts. See the normalization below.
+const LEGACY_HACKS = [
   {
     id: 'unbound',
     title: 'Pokémon Unbound',
@@ -1058,7 +1063,9 @@ export const HACKS = [
   },
 ];
 
-export const PLATFORMS = ['All', 'GBA', 'GBC', 'NDS', 'SNES'];
+export const HACKS = buildCatalog(LEGACY_HACKS, candidates);
+
+export const PLATFORMS = ['All', 'GB', 'GBA', 'GBC', 'NDS', 'SNES'];
 
 export const TAGS = [
   'Completed',

@@ -2,7 +2,7 @@
 """
 Deterministic pure-Python (stdlib only) asset generator for PokeHack Installer.
 
-Produces original pixel-art Pokéball/D-pad hybrid motif assets on the app's
+Produces a neutral pixel-art library/controller motif on the app's
 brand colors:
 
   - background  #0a0a0f  (COLORS.bg)
@@ -18,6 +18,7 @@ Usage:
   python3 scripts/generate_assets.py
 """
 import io
+import json
 import os
 import struct
 import zlib
@@ -106,36 +107,14 @@ class Canvas:
 
 
 def draw_motif(cv: Canvas, cx: int, cy: int, outer: int) -> None:
-    """
-    Draw an original Pokéball/D-pad hybrid motif centered at (cx,cy).
-
-    Top half of a Pokéball with a red upper cap, white lower cap, a black
-    horizontal divide, and a D-pad-style plus in the center. Fully original
-    design, no copyrighted sprites.
-    """
-    # Outer circle (white disk) - the ball body.
-    cv.fill_disk(cx, cy, outer, (*WHITE, 255))
-    # Red upper cap: top semicircle.
-    r2 = outer * outer
-    for y in range(-outer, 0):  # top half only
-        for x in range(-outer, outer + 1):
-            if x * x + y * y <= r2:
-                cv.set_pixel(cx + x, cy + y, (*RED, 255))
-    # Black divider band across the middle.
-    band = max(1, outer // 24)
-    cv.hline(cx - outer, cx + outer, cy, (*PRIMARY, 255))
-    for dy in range(-band, band + 1):
-        cv.hline(cx - outer, cx + outer, cy + dy, (0x11, 0x11, 0x11, 255))
-    # Central button: dark circle.
-    btn_r = max(3, outer // 11)
-    cv.fill_disk(cx, cy, btn_r, (0x11, 0x11, 0x11, 255))
-    # D-pad arms: thin rectangles pointing up/down/left/right.
-    arm_w = max(1, outer // 16)
-    arm_len = max(2, outer // 6)
-    cv.fill_rect(cx - arm_w, cy - outer + 3 + btn_r, cx + arm_w + 1, cy - arm_w + 1, (*PRIMARY, 255))  # up
-    cv.fill_rect(cx - arm_w, cy + arm_w, cx + arm_w + 1, cy + outer - 3 - btn_r + 1, (*PRIMARY, 255))   # down
-    cv.fill_rect(cx - outer + 3 + btn_r, cy - arm_w, cx - arm_w + 1, cy + arm_w + 1, (*PRIMARY, 255))   # left
-    cv.fill_rect(cx + arm_w, cy - arm_w, cx + outer - 3 - btn_r + 1, cy + arm_w + 1, (*PRIMARY, 255))  # right
+    """Three library spines and a generic D-pad; no ball/character silhouette."""
+    unit = max(1, outer // 24)
+    for dx, height, color in [(-7, 12, PRIMARY), (-2, 15, WHITE), (3, 10, PRIMARY)]:
+        cv.fill_rect(cx + dx * unit, cy - height * unit // 2,
+                     cx + (dx + 3) * unit, cy + height * unit // 2, (*color, 255))
+    px, py = cx + 7 * unit, cy + 4 * unit
+    cv.fill_rect(px - unit, py - 3 * unit, px + unit, py + 3 * unit, (*PRIMARY, 255))
+    cv.fill_rect(px - 3 * unit, py - unit, px + 3 * unit, py + unit, (*PRIMARY, 255))
 
 
 def make_icon(size: int, opaque: bool) -> bytearray:
@@ -208,7 +187,15 @@ def _hack_covers():
         src,
     ):
         out.append((m.group(1), m.group(2), "#" + m.group(3)))
-    return out
+    candidates_path = os.path.join(REPO_ROOT, 'src', 'data', 'catalog-candidates.json')
+    if os.path.exists(candidates_path):
+        accents = {'GB': '#FFD93D', 'GBC': '#9ACD32', 'GBA': '#7df2ff', 'NDS': '#b428a0', 'SNES': '#a78bfa'}
+        with open(candidates_path, encoding='utf-8') as f:
+            for record in json.load(f):
+                if not _re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', record['id']):
+                    raise ValueError('Invalid catalog id')
+                out.append((record['id'], record['platform'], accents[record['platform']]))
+    return list({record[0]: record for record in out}.values())
 
 
 HACK_COVERS = _hack_covers()
@@ -274,7 +261,7 @@ def make_cover(hack_id: str, platform: str, accent_hex: str) -> bytearray:
     # The cartridge: platform-proportioned.
     if platform == "NDS":
         cw, ch = 210, 150
-    elif platform == "GBC":
+    elif platform in ("GB", "GBC"):
         cw, ch = 130, 168
     else:  # GBA / default
         cw, ch = 168, 172

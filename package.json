@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "catalog:assets": "node scripts/emit-covers.js && python scripts/generate_assets.py"
   },
   "dependencies": {
     "expo": "~50.0.0",
