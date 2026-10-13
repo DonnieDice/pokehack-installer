@@ -194,30 +194,24 @@ def make_favicon(size: int) -> bytearray:
 COVER_W, COVER_H = 480, 270
 COVERS_DIR = os.path.join(ASSETS_DIR, "covers")
 
-# (hack_id, platform, accent hex) — mirrors HACKS in src/data/hacks.js.
-HACK_COVERS = [
-    ("unbound", "GBA", "#00D4FF"),
-    ("gaia", "GBA", "#00FF9D"),
-    ("emerald-rogue", "GBA", "#FF6B35"),
-    ("glazed", "GBA", "#00AAFF"),
-    ("crystal-clear", "GBC", "#7799FF"),
-    ("prism", "GBC", "#CC66FF"),
-    ("light-platinum", "GBA", "#FFDD00"),
-    ("adventures-red", "GBA", "#FF4444"),
-    ("blaze-black-2", "NDS", "#0066FF"),
-    ("sovereign-of-skies", "GBA", "#33AAFF"),
-    ("radical-red", "GBA", "#FF1744"),
-    ("renegade-platinum", "NDS", "#00A8FF"),
-    ("sacred-gold-storm-silver", "NDS", "#FFB300"),
-    ("polished-crystal", "GBC", "#00E5C0"),
-    ("pokemon-orange", "GBC", "#FF7A1A"),
-    ("roaring-red", "GBA", "#C86BFF"),
-    ("flora-sky", "GBA", "#52C234"),
-    ("mega-power", "GBA", "#FFD93D"),
-    ("vega", "GBA", "#8c7dff"),
-    ("super-gold-97", "GBC", "#D4AF37"),
-    ("mind-crystal", "NDS", "#9ACD32"),
-]
+# (hack_id, platform, accent hex) — auto-derived from src/data/hacks.js so
+# every catalog entry always has a matching local fallback cover.
+import re as _re
+
+
+def _hack_covers():
+    with open(os.path.join(REPO_ROOT, "src", "data", "hacks.js"), encoding="utf-8") as f:
+        src = f.read()
+    out = []
+    for m in _re.finditer(
+        r"id: '([^']+)',[\s\S]*?platform: '([^']+)',[\s\S]*?accentColor: '#([0-9A-Fa-f]{6})'",
+        src,
+    ):
+        out.append((m.group(1), m.group(2), "#" + m.group(3)))
+    return out
+
+
+HACK_COVERS = _hack_covers()
 
 
 def _hex_rgb(h: str) -> tuple:
