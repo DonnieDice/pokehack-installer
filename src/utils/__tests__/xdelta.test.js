@@ -5,31 +5,11 @@ function u8(arr) {
 }
 
 // VCDIFF varint encoder (RFC 3284 section 2).
-// Decoder: value += (byte & 0x7F) * shift; if not last: shift <<= 7; value += shift
-// Encoder: for k bytes, value = (standard base-128) + offset_k
-//   where offset_k = sum of 128^i for i=1..k-1 = 128*(128^(k-1) - 1)/127
 function encodeVarint(value) {
-  if (value < 0) throw new Error('Cannot encode negative varint');
-  let k = 1;
-  while (true) {
-    const offset = k === 1 ? 0 : 128 * (Math.pow(128, k - 1) - 1) / 127;
-    const range = Math.pow(128, k);
-    if (value >= offset && value < offset + range) {
-      const bytes = [];
-      let remainder = value - offset;
-      for (let i = 0; i < k; i++) {
-        const digit = remainder & 0x7f;
-        remainder = Math.floor(remainder / 128);
-        if (i === k - 1) {
-          bytes.push(digit | 0x80);
-        } else {
-          bytes.push(digit);
-        }
-      }
-      return bytes;
-    }
-    k++;
-  }
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error('Invalid varint');
+  const bytes = [value % 128];
+  while ((value = Math.floor(value / 128)) > 0) bytes.unshift((value % 128) | 0x80);
+  return bytes;
 }
 
 function writeUint32LE(value) {
