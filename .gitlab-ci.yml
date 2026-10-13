@@ -41,6 +41,9 @@ android-debug-apk:
   stage: build
   image: mingc/android-build-box:latest
   tags: [android]
+  # Serialize against the release job: two concurrent Gradle builds on this
+  # runner repeatedly OOM ("Gradle build daemon disappeared unexpectedly").
+  resource_group: android-gradle
   cache:
     key:
       files:
@@ -53,14 +56,14 @@ android-debug-apk:
     - npx expo prebuild -p android --no-install
     # Patch the prebuild-generated build.gradle so debug artifacts are no
     # longer traps: give debug its own applicationId so a debug install can
-    # never signature-conflict with the release app. The JS bundle is embedded
-    # by running createBundleDebugJsAndAssets explicitly (bundleInDebug is not
-    # a ReactExtension property in RN 0.73 - the task always exists and its
-    # output dir is packaged when it runs).
+    # never signature-conflict with the release app or shadow its launcher
+    # icon. (RN 0.73's react{} DSL has no bundleInDebug equivalent; debug
+    # builds remain Metro-only, which is standard RN dev behavior - and with
+    # a distinct package id they can no longer masquerade as the release app.)
     # Root cause of the standalone-APK launch saga (issues #21/#23/#24):
-    # the operator installed the bundle-less debug APK, later release installs
-    # failed silently on the signature mismatch, and the old debug app kept
-    # showing "Unable to load script".
+    # the operator installed the bundle-less debug APK under the SAME package
+    # id, later release installs failed on the signature mismatch, and the old
+    # debug app kept showing "Unable to load script".
     - |
       python3 - <<'PYEOF'
       import sys
@@ -79,7 +82,7 @@ android-debug-apk:
           f.write(gradle)
       print('debug build patched: applicationIdSuffix=debug')
       PYEOF
-    - cd android && ./gradlew createBundleDebugJsAndAssets assembleDebug --no-daemon
+    - cd android && ./gradlew assembleDebug --no-daemon
   artifacts:
     name: "apk-${CI_COMMIT_SHORT_SHA}"
     paths:
@@ -96,6 +99,8 @@ android-release-apk:
   stage: build
   image: mingc/android-build-box:latest
   tags: [android]
+  # Serialize against the debug job (concurrent Gradle builds OOM the runner).
+  resource_group: android-gradle
   cache:
     key:
       files:
