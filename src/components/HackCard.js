@@ -1,13 +1,19 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, DIFFICULTY_COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
+import { COVERS } from '../data/covers';
 
 export default function HackCard({ hack, onPress }) {
   const platformColor = PLATFORM_COLORS[hack.platform] || COLORS.primary;
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
+  const cover = COVERS[hack.id];
   return (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
-      <View style={[s.accent, { backgroundColor: hack.accentColor || platformColor }]} />
+      {cover ? (
+        <Image source={cover} style={s.cover} resizeMode="cover" />
+      ) : (
+        <View style={[s.coverFallback, { backgroundColor: hack.accentColor || platformColor }]} />
+      )}
       <View style={s.body}>
         <View style={s.titleRow}>
           <Text style={s.title} numberOfLines={1}>
@@ -44,7 +50,8 @@ const s = StyleSheet.create({
     marginBottom: SPACING.sm,
     overflow: 'hidden',
   },
-  accent: { width: 4 },
+  cover: { width: 88, height: '100%' },
+  coverFallback: { width: 88 },
   body: { flex: 1, padding: SPACING.md },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { color: COLORS.text, fontFamily: FONT.bodyBold, fontSize: 17, flex: 1, marginRight: SPACING.sm },
