@@ -5,10 +5,11 @@
  */
 const { HACKS, PLATFORMS, TAGS } = require('../hacks');
 const { COVERS } = require('../covers');
+const { hasReviewedProject, permittedCoverUrl } = require('../../utils/catalogSafety');
 
 describe('catalog', () => {
-  test('has at least 45 hacks', () => {
-    expect(HACKS.length).toBeGreaterThanOrEqual(45);
+  test('has at least 100 projects', () => {
+    expect(HACKS.length).toBeGreaterThanOrEqual(100);
   });
 
   test('every hack has unique ids', () => {
@@ -31,23 +32,20 @@ describe('catalog', () => {
   });
 
   test('remote cover art urls are valid https when present', () => {
-    let withCover = 0;
     for (const h of HACKS) {
       if (h.coverUrl !== undefined) {
         expect(h.coverUrl.startsWith('https://')).toBe(true);
         expect(() => new URL(h.coverUrl)).not.toThrow();
-        withCover++;
       }
     }
-    // The large majority of the catalog must carry real remote cover art.
-    expect(withCover).toBeGreaterThanOrEqual(Math.floor(HACKS.length * 0.7));
+    // A URL is not proof of artwork permission or image correctness.
   });
 
   test('every hack has the required catalog fields', () => {
     for (const h of HACKS) {
       for (const field of [
-        'id', 'title', 'subtitle', 'platform', 'baseGame', 'projectUrl',
-        'description', 'difficulty', 'tags', 'rating', 'hours',
+        'id', 'title', 'subtitle', 'platform', 'projectUrl',
+        'description', 'tags',
         'accentColor',
       ]) {
         if (h[field] === undefined || h[field] === null) {
@@ -60,9 +58,8 @@ describe('catalog', () => {
         expect(h.features.length).toBeGreaterThan(0);
       }
       expect(Array.isArray(h.tags)).toBe(true);
-      expect(typeof h.completed).toBe('boolean');
-      expect(h.rating).toBeGreaterThan(0);
-      expect(h.rating).toBeLessThanOrEqual(10);
+      if (h.completed !== undefined) expect(typeof h.completed).toBe('boolean');
+      expect(h.rating).toBeUndefined();
     }
   });
 
@@ -70,6 +67,19 @@ describe('catalog', () => {
     const known = PLATFORMS.filter((p) => p !== 'All');
     for (const h of HACKS) {
       expect(known).toContain(h.platform);
+    }
+  });
+
+  test('new creator records carry sourcing evidence without invented estimates', () => {
+    const reviewed = HACKS.filter((hack) => hack.sourceType === 'creator');
+    expect(reviewed.length).toBeGreaterThanOrEqual(60);
+    for (const hack of reviewed) {
+      expect(hasReviewedProject(hack)).toBe(true);
+      expect(hack.verifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(hack.description.length).toBeGreaterThan(20);
+      expect(hack.rating).toBeUndefined();
+      expect(hack.hours).toBeUndefined();
+      expect(permittedCoverUrl(hack)).toBeNull();
     }
   });
 

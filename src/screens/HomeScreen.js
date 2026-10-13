@@ -5,29 +5,23 @@ import HackCard from '../components/HackCard';
 import { HACKS, PLATFORMS } from '../data/hacks';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
 
-const DIFFICULTY_ORDER = { Beginner: 0, Intermediate: 1, Advanced: 2, Expert: 3 };
-
 const SORTS = [
-  { id: 'rating', label: 'TOP RATED' },
   { id: 'title', label: 'A-Z' },
-  { id: 'difficulty', label: 'DIFFICULTY' },
   { id: 'platform', label: 'PLATFORM' },
 ];
 
 function sortHacks(list, sort) {
   const out = [...list];
   if (sort === 'title') return out.sort((a, b) => a.title.localeCompare(b.title));
-  if (sort === 'difficulty')
-    return out.sort((a, b) => DIFFICULTY_ORDER[a.difficulty] - DIFFICULTY_ORDER[b.difficulty]);
   if (sort === 'platform') return out.sort((a, b) => a.platform.localeCompare(b.platform));
-  return out.sort((a, b) => b.rating - a.rating); // default: rating
+  return out.sort((a, b) => a.title.localeCompare(b.title));
 }
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [platform, setPlatform] = useState('All');
-  const [sort, setSort] = useState('rating');
+  const [sort, setSort] = useState('title');
 
   const hacks = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -83,6 +77,7 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
+      <Text style={s.catalogCount}>{hacks.length} of {HACKS.length} projects · creator links where reviewed</Text>
       <FlatList
         data={hacks}
         keyExtractor={(h) => h.id}
@@ -147,4 +142,5 @@ const s = StyleSheet.create({
   sortText: { color: COLORS.textMuted, fontFamily: FONT.pixel, fontSize: 6 },
   sortTextActive: { color: COLORS.primary },
   empty: { color: COLORS.textMuted, textAlign: 'center', marginTop: SPACING.xl, fontFamily: FONT.body, fontSize: 14 },
+  catalogCount: { color: COLORS.textMuted, fontFamily: FONT.body, fontSize: 12, marginBottom: SPACING.sm },
 });

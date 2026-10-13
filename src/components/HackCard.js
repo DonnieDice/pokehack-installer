@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, DIFFICULTY_COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
 import { COVERS } from '../data/covers';
+import { permittedCoverUrl, statusLabel } from '../utils/catalogSafety';
 
 export default function HackCard({ hack, onPress }) {
   const [remoteFailed, setRemoteFailed] = useState(false);
   const platformColor = PLATFORM_COLORS[hack.platform] || COLORS.primary;
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
   const localCover = COVERS[hack.id];
-  const useRemote = hack.coverUrl && !remoteFailed;
-  const source = useRemote ? { uri: hack.coverUrl } : localCover;
+  const coverUrl = permittedCoverUrl(hack);
+  const source = coverUrl && !remoteFailed ? { uri: coverUrl } : localCover;
   return (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
       {source ? (
@@ -27,7 +28,7 @@ export default function HackCard({ hack, onPress }) {
           <Text style={s.title} numberOfLines={1}>
             {hack.title}
           </Text>
-          <Text style={hack.completed ? s.done : s.wip}>{hack.completed ? 'COMPLETE' : 'ACTIVE'}</Text>
+          <Text style={hack.status === 'completed' || hack.completed === true ? s.done : s.wip}>{statusLabel(hack).toUpperCase()}</Text>
         </View>
         <Text style={s.subtitle} numberOfLines={1}>
           {hack.subtitle}
@@ -36,12 +37,11 @@ export default function HackCard({ hack, onPress }) {
           <Text style={[s.platform, { color: platformColor, borderColor: platformColor }]}>
             {hack.platform}
           </Text>
-          <View style={s.difficulty}>
+           {hack.difficulty ? <View style={s.difficulty}>
             <View style={[s.dot, { backgroundColor: difficultyColor }]} />
             <Text style={s.difficultyText}>{hack.difficulty}</Text>
-          </View>
-          <Text style={s.meta}>{hack.hours}</Text>
-          <Text style={s.rating}>{hack.rating.toFixed(1)}</Text>
+           </View> : null}
+           {hack.hours ? <Text style={s.meta}>{hack.hours}</Text> : null}
         </View>
       </View>
     </TouchableOpacity>

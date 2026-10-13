@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'react-native';
 import { COLORS, DIFFICULTY_COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
 import { COVERS } from '../data/covers';
+import { hasReviewedProject, patchSearchUrl, permittedCoverUrl, projectSearchUrl, statusLabel } from '../utils/catalogSafety';
 
 function Info({ label, value, color }) {
   return (
@@ -16,17 +17,6 @@ function Info({ label, value, color }) {
   );
 }
 
-function downloadSearchUrl(hack) {
-  // Google search scoped to the project page's own host, so the top hit is
-  // the project page and its download links. Falls back to a broad query
-  // if the projectUrl is malformed.
-  const hostMatch = /^https?:\/\/([^/?#]+)/.exec(hack.projectUrl || '');
-  const q = hostMatch
-    ? `${hack.title} download site:${hostMatch[1]}`
-    : `${hack.title} ROM hack download`;
-  return 'https://www.google.com/search?q=' + encodeURIComponent(q);
-}
-
 export default function HackDetailScreen({ route }) {
   const insets = useSafeAreaInsets();
   const [remoteFailed, setRemoteFailed] = React.useState(false);
@@ -35,7 +25,8 @@ export default function HackDetailScreen({ route }) {
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
   const accent = hack.accentColor || platformColor;
   const localCover = COVERS[hack.id];
-  const heroSource = hack.coverUrl && !remoteFailed ? { uri: hack.coverUrl } : localCover;
+  const coverUrl = permittedCoverUrl(hack);
+  const heroSource = coverUrl && !remoteFailed ? { uri: coverUrl } : localCover;
   return (
     <ScrollView
       style={s.root}
@@ -66,17 +57,21 @@ export default function HackDetailScreen({ route }) {
       </View>
       <View style={s.grid}>
         <Info label="PLATFORM" value={hack.platform} color={platformColor} />
-        <Info label="BASE GAME" value={hack.baseGame} />
-        <Info label="DIFFICULTY" value={hack.difficulty} color={difficultyColor} />
-        <Info label="LENGTH" value={hack.hours} />
-        <Info label="RATING" value={hack.rating.toFixed(1) + ' / 10'} />
-        <Info label="STATUS" value={hack.completed ? 'Complete' : 'In progress'} color={hack.completed ? COLORS.success : COLORS.warning} />
+        <Info label="BASE GAME" value={hack.baseGame || 'Not verified'} />
+        {hack.difficulty ? <Info label="DIFFICULTY" value={hack.difficulty} color={difficultyColor} /> : null}
+        {hack.hours ? <Info label="LENGTH" value={hack.hours} /> : null}
+        <Info label="STATUS" value={statusLabel(hack)} color={hack.status === 'completed' || hack.completed === true ? COLORS.success : COLORS.textSub} />
       </View>
 
       <Text style={s.section}>THE HACK</Text>
       <Text style={s.body}>{hack.description}</Text>
+      <Text style={s.legal}>
+        {hasReviewedProject(hack)
+          ? `Project source checked ${hack.verifiedAt}. This is not rights clearance or a guarantee of a playable release.`
+          : 'Historical listing: description and project destination still need source review.'}
+      </Text>
 
-      {hack.features && hack.features.length ? (
+      {hasReviewedProject(hack) && hack.features && hack.features.length ? (
         <>
           <Text style={s.section}>FEATURES</Text>
           {hack.features.map((f) => (
@@ -90,18 +85,21 @@ export default function HackDetailScreen({ route }) {
 
       <TouchableOpacity
         style={[s.findButton, { backgroundColor: accent }]}
-        onPress={() => Linking.openURL(hack.projectUrl)}
+        onPress={() => Linking.openURL(hasReviewedProject(hack) ? hack.projectUrl : projectSearchUrl(hack))}
       >
-        <Text style={[s.findButtonText, { color: '#050810' }]}>OPEN PROJECT PAGE</Text>
+        <Text style={[s.findButtonText, { color: '#050810' }]}>{hasReviewedProject(hack) ? 'OPEN PROJECT PAGE' : 'FIND CREATOR PROJECT'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(downloadSearchUrl(hack))}>
-        <Text style={s.linkButtonText}>FIND DOWNLOAD</Text>
-      </TouchableOpacity>
+      {hasReviewedProject(hack) ? (
+        <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(patchSearchUrl(hack))}>
+          <Text style={s.linkButtonText}>FIND PATCH</Text>
+        </TouchableOpacity>
+      ) : null}
 
       <Text style={s.legal}>
-        This app does not host or distribute any game files. Download links come from a web search
-        you run yourself — only download content you have the legal right to own.
+        Independent discovery catalog; not affiliated with Nintendo, The Pokémon Company, or GAME FREAK.
+        No base ROMs or pre-patched games are distributed here. Use only files and patches you are
+        authorized to use. Owning a game does not automatically authorize downloading its ROM.
       </Text>
     </ScrollView>
   );
