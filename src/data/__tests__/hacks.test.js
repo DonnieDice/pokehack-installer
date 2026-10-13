@@ -7,8 +7,8 @@ const { HACKS, PLATFORMS, TAGS } = require('../hacks');
 const { COVERS } = require('../covers');
 
 describe('catalog', () => {
-  test('has at least 21 hacks', () => {
-    expect(HACKS.length).toBeGreaterThanOrEqual(21);
+  test('has at least 45 hacks', () => {
+    expect(HACKS.length).toBeGreaterThanOrEqual(45);
   });
 
   test('every hack has unique ids', () => {
@@ -47,15 +47,18 @@ describe('catalog', () => {
     for (const h of HACKS) {
       for (const field of [
         'id', 'title', 'subtitle', 'platform', 'baseGame', 'projectUrl',
-        'description', 'features', 'difficulty', 'tags', 'rating', 'hours',
+        'description', 'difficulty', 'tags', 'rating', 'hours',
         'accentColor',
       ]) {
         if (h[field] === undefined || h[field] === null) {
           throw new Error(h.id + ' is missing field: ' + field);
         }
       }
-      expect(Array.isArray(h.features)).toBe(true);
-      expect(h.features.length).toBeGreaterThan(0);
+      // features is optional; when present it must be a non-empty array.
+      if (h.features !== undefined) {
+        expect(Array.isArray(h.features)).toBe(true);
+        expect(h.features.length).toBeGreaterThan(0);
+      }
       expect(Array.isArray(h.tags)).toBe(true);
       expect(typeof h.completed).toBe('boolean');
       expect(h.rating).toBeGreaterThan(0);

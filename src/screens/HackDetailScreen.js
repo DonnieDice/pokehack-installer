@@ -16,9 +16,15 @@ function Info({ label, value, color }) {
   );
 }
 
-function downloadSearchUrl(title) {
-  // Open a web search for an active download instead of linking one directly.
-  return 'https://www.google.com/search?q=' + encodeURIComponent(title + ' ROM hack download');
+function downloadSearchUrl(hack) {
+  // Google search scoped to the project page's own host, so the top hit is
+  // the project page and its download links. Falls back to a broad query
+  // if the projectUrl is malformed.
+  const hostMatch = /^https?:\/\/([^/?#]+)/.exec(hack.projectUrl || '');
+  const q = hostMatch
+    ? `${hack.title} download site:${hostMatch[1]}`
+    : `${hack.title} ROM hack download`;
+  return 'https://www.google.com/search?q=' + encodeURIComponent(q);
 }
 
 export default function HackDetailScreen({ route }) {
@@ -70,23 +76,27 @@ export default function HackDetailScreen({ route }) {
       <Text style={s.section}>THE HACK</Text>
       <Text style={s.body}>{hack.description}</Text>
 
-      <Text style={s.section}>FEATURES</Text>
-      {hack.features.map((f) => (
-        <View key={f} style={s.featureRow}>
-          <View style={[s.featureDot, { backgroundColor: accent }]} />
-          <Text style={s.feature}>{f}</Text>
-        </View>
-      ))}
+      {hack.features && hack.features.length ? (
+        <>
+          <Text style={s.section}>FEATURES</Text>
+          {hack.features.map((f) => (
+            <View key={f} style={s.featureRow}>
+              <View style={[s.featureDot, { backgroundColor: accent }]} />
+              <Text style={s.feature}>{f}</Text>
+            </View>
+          ))}
+        </>
+      ) : null}
 
       <TouchableOpacity
         style={[s.findButton, { backgroundColor: accent }]}
-        onPress={() => Linking.openURL(downloadSearchUrl(hack.title))}
+        onPress={() => Linking.openURL(hack.projectUrl)}
       >
-        <Text style={[s.findButtonText, { color: '#0a0a0f' }]}>FIND DOWNLOAD</Text>
+        <Text style={[s.findButtonText, { color: '#050810' }]}>OPEN PROJECT PAGE</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(hack.projectUrl)}>
-        <Text style={s.linkButtonText}>OPEN PROJECT PAGE</Text>
+      <TouchableOpacity style={s.linkButton} onPress={() => Linking.openURL(downloadSearchUrl(hack))}>
+        <Text style={s.linkButtonText}>FIND DOWNLOAD</Text>
       </TouchableOpacity>
 
       <Text style={s.legal}>
