@@ -47,8 +47,8 @@ export default function HomeScreen({ navigation }) {
     <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.headerRow}>
         <View style={{ flex: 1 }}>
-          <Text style={s.heading}>POKEHACK</Text>
-          <Text style={s.subheading}>INSTALLER</Text>
+          <Text style={s.heading}>RGXMODS</Text>
+          <Text style={s.subheading}>POKEHACK INSTALLER</Text>
         </View>
         <TouchableOpacity style={s.emuButton} onPress={() => navigation.navigate('Emulators')}>
           <Text style={s.emuButtonText}>EMULATORS</Text>

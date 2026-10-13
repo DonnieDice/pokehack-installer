@@ -8,6 +8,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
     patchFormat: 'ups',
     projectUrl: 'https://pokefirered.com/pokemon-unbound/',
+    coverUrl: 'https://pokefirered.com/wp-content/uploads/2026/06/pokemon-unbound-Download.webp',
     description: 'Widely regarded as the greatest GBA ROM hack ever made. Features a massive new region, a compelling story with full voiceover ambitions, multiple difficulty modes, 100+ optional missions, a custom battle engine, and over 100 hours of content.',
     features: [
       'Difficulty modes (Easy / Normal / Hard / Challenge)',
@@ -34,6 +35,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
     patchFormat: 'ups',
     projectUrl: 'https://www.pokecommunity.com/threads/pok%C3%A9mon-gaia-version.326118/',
+    coverUrl: 'https://thepokegaia.net/wp-content/uploads/2026/05/cropped-Pokemon_Gaia_Logo_image-1.webp',
     description: "A beloved classic that captures everything great about traditional Pokémon. Set in the Orbtus region with an ancient civilization backstory, updated mechanics through Gen 6, and Fairy type. Often the first hack recommended to newcomers.",
     features: [
       'New region: Orbtus',
@@ -60,6 +62,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Emerald Version (U).gba',
     patchFormat: 'bps',
     projectUrl: 'https://www.pokecommunity.com/threads/pokemon-emerald-rogue.479406/',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2022/08/Pokemon-Emerald-Rogue.jpeg',
     description: 'Transforms Pokémon Emerald into a roguelite with procedurally generated routes, random wild Pokémon, item shops between runs, and permadeath. No two runs are alike. Actively maintained with frequent updates.',
     features: [
       'Roguelite / roguelike gameplay',
@@ -86,6 +89,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Emerald Version (U).gba',
     patchFormat: 'ips',
     projectUrl: 'https://www.pokeharbor.com/2022/01/pokemon-glazed',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/05/pokemon-glazed.png',
     description: 'A sweeping adventure spanning three regions with a unique story where you can choose your starter from five options including Riolu. Features dream world legendaries, multiple rival characters, and a massive post-game.',
     features: [
       '5 starter choices including Riolu',
@@ -112,6 +116,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Crystal Version (U).gbc',
     patchFormat: 'bps',
     projectUrl: 'https://www.pokeharbor.com/2022/01/pokemon-crystal-clear',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2022/01/Pokemon-Crystal-Clear.png',
     description: 'Crystal reimagined as a true open world game. Choose your starting town, pick any starter, tackle gyms in any order across both Johto and Kanto, and play through a fully scaling game world that adapts to your progress.',
     features: [
       'Open world — no forced progression',
@@ -138,6 +143,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Gold Version (U).gbc',
     patchFormat: 'ips',
     projectUrl: 'https://rainbowdevs.com/title/prism',
+    coverUrl: 'https://rainbowdevs.com/wp-content/uploads/2020/07/Prism2-rev1-1024x914.png',
     description: 'A legendary hack 20 years in development before its leak. Set in the new Naljo region connected to Rijon and Johto, featuring 252 Pokémon, the ability to play as your Pokémon in puzzles, and some of the most original design in any ROM hack.',
     features: [
       'New region: Naljo',
@@ -214,6 +220,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Black Version 2 (U).nds',
     patchFormat: 'xdelta',
     projectUrl: 'https://projectpokemon.org/home/files/file/2465-pok%C3%A9mon-blaze-black-2-pok%C3%A9mon-volt-white-2',
+    coverUrl: 'https://projectpokemon.org/home/uploads/monthly_2017_11/imageproxy.thumb.png.683b2585efd6865e64bafa8678d56a6f.png',
     description: "Drayano's masterwork: a difficulty/content hack of Black 2 that makes all 649 Pokémon obtainable in a single playthrough without trading. Every trainer has been redesigned. The best way to play Gen 5.",
     features: [
       'All 649 Pokémon obtainable',
@@ -239,6 +246,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
     patchFormat: 'ups',
     projectUrl: 'https://www.pokeharbor.com/2021/07/pokemon-sovereign-of-the-skies',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/07/pokemon-sovereign-of-the-skies.jpg',
     description: 'A polished, complete hack with a sky and flying theme throughout. Features a new region, custom maps and music, and a story focused on legendary sky Pokémon. High production quality throughout.',
     features: [
       'New region with sky theme',
@@ -264,6 +272,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
     patchFormat: 'ups',
     projectUrl: 'https://www.pokeharbor.com/2021/06/pokemon-radical-red',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/06/Pokemon-Radical-Red-1.jpg',
     description:
       'The most popular difficulty hack of FireRed. Every battle is rebuilt with competitive movesets, and the roster spans every generation up to Gen 9 including Hisuian and Paldean forms. Constantly updated by soupercell with modern mechanics like Mega Evolution, Z-Moves, and Terastallization.',
     features: [
@@ -290,6 +299,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Platinum Version (US).nds',
     patchFormat: 'xdelta',
     projectUrl: 'https://www.pokeharbor.com/2021/12/pokemon-renegade-platinum',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/12/Pokemon-Renegade-Platinum.png',
     description:
       'Drayano\u2019s legendary enhancement of Pok\u00e9mon Platinum. All 493 Pok\u00e9mon are obtainable in a single playthrough, every trainer is rebuilt, the Fairy type is added, and trade evolutions are gone. Widely considered the definitive way to replay Sinnoh.',
     features: [
@@ -316,6 +326,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - HeartGold Version (US).nds',
     patchFormat: 'xdelta',
     projectUrl: 'https://gbatemp.net/threads/pokemon-sacred-gold-storm-silver.327567',
+    coverUrl: 'https://data.classicgames.me/nds-rom/pokemon-sacred-gold-and-storm-silver.jpg',
     description:
       'Drayano\u2019s classic HeartGold and SoulSilver overhaul. Every gym leader and champion carries a full, dangerous team, all 493 Pok\u00e9mon are catchable, and Johto\u2019s pacing is respected while the challenge is cranked up.',
     features: [
@@ -342,6 +353,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Crystal Version (U).gbc',
     patchFormat: 'patch',
     projectUrl: 'https://github.com/Rangi42/polishedcrystal',
+    coverUrl: 'https://opengraph.githubassets.com/9834986ecbfa899c06599ded6dd2e7e68e87d079c4c3b79e27694efa301adb60/Rangi42/polishedcrystal',
     description:
       'A lovingly maintained enhancement of Pok\u00e9mon Crystal by Rangi. Choose faithful, vanilla, or modern versions: reusable TMs, the physical/special split, later-gen moves and abilities, and hundreds of fixes \u2014 while keeping the original Johto soul intact.',
     features: [
@@ -368,6 +380,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Crystal Version (U).gbc',
     patchFormat: 'ips',
     projectUrl: 'https://github.com/PiaCarrot/pokeorange',
+    coverUrl: 'https://opengraph.githubassets.com/007fcce02fe340ef10024b0d804e62bb621530c1fca7f9249e38187ea2b05387/PiaCarrot/pokeorange',
     description:
       'A beloved Crystal-based hack set in the anime\u2019s Orange Islands. Sail between islands, take on the Orange Crew in unusual challenge formats, and enjoy a compact, charming adventure that fits the handheld era perfectly.',
     features: [
@@ -394,6 +407,7 @@ export const HACKS = [
     baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
     patchFormat: 'ups',
     projectUrl: 'https://www.pokeharbor.com/2025/11/pokemon-roaring-red',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2025/11/Pokemon-Roaring-Red-GBA.png',
     description:
       'A fresh 2026 rebalance of FireRed by Caves. All 386 Pok\u00e9mon from Gens 1-3 are catchable, moves and mechanics are pulled forward from later generations, trainers hit harder, and the Sevii Islands get a real postgame \u2014 with a dedicated Challenge mode for veterans.',
     features: [
@@ -410,6 +424,141 @@ export const HACKS = [
     hours: '30-45',
     gradient: ['#14001a', '#C86BFF'],
     accentColor: '#C86BFF',
+  },
+  {
+    id: 'flora-sky',
+    title: 'Pok\u00e9mon Flora Sky',
+    subtitle: 'A beloved classic Emerald adventure',
+    platform: 'GBA',
+    baseGame: 'Pok\u00e9mon Emerald (U)',
+    baseRomName: 'Pokemon - Emerald Version (U).gba',
+    patchFormat: 'patch',
+    projectUrl: 'https://www.pokeharbor.com/2021/05/pokemon-flora-sky-rebirth/',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/05/pokemon-flora-sky.png',
+    description:
+      'One of the most nostalgic Emerald hacks ever made. Explore the custom Hoenn-flavored world across two regions, meet Pok\u00e9mon from Gens 1-5, and enjoy one of the genre\u2019s most approachable stories. The Rebirth version polishes the classic for modern play.',
+    features: [
+      'Two regions to explore',
+      'Pok\u00e9mon from Gens 1-5',
+      'Custom starters and events',
+      'New gyms and Elite Four',
+      'Beginner-friendly pacing',
+    ],
+    difficulty: 'Beginner',
+    tags: ['New Region', 'Completed', 'Classic', 'Beginner-Friendly'],
+    completed: true,
+    rating: 8.4,
+    hours: '30-40',
+    gradient: ['#00220f', '#52C234'],
+    accentColor: '#52C234',
+  },
+  {
+    id: 'mega-power',
+    title: 'Pok\u00e9mon Mega Power',
+    subtitle: 'Mega Evolution on a Ruby foundation',
+    platform: 'GBA',
+    baseGame: 'Pok\u00e9mon Ruby (U)',
+    baseRomName: 'Pokemon - Ruby Version (U)(Mode7).gba',
+    patchFormat: 'patch',
+    projectUrl: 'https://www.pokeharbor.com/2021/06/pokemon-mega-power/',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/06/pokemon-mega-power.png',
+    description:
+      'A Ruby-based hack famous for bringing Mega Evolution to the GBA era. Follow a fresh story with new characters, capture hard-to-find legendary Pok\u00e9mon, and build teams around Mega forms long before the 3DS did it natively.',
+    features: [
+      'Mega Evolution on GBA',
+      'New story and characters',
+      'Rare legendary encounters',
+      'Multiple regions postgame',
+      'Updated moves and abilities',
+    ],
+    difficulty: 'Beginner',
+    tags: ['Mega Evolution', 'Completed', 'New Story'],
+    completed: true,
+    rating: 8.2,
+    hours: '25-35',
+    gradient: ['#221a00', '#FFD93D'],
+    accentColor: '#FFD93D',
+  },
+  {
+    id: 'vega',
+    title: 'Pok\u00e9mon Vega',
+    subtitle: 'The legendary Japanese classic, translated',
+    platform: 'GBA',
+    baseGame: 'Pok\u00e9mon Fire Red (U)',
+    baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
+    patchFormat: 'patch',
+    projectUrl: 'https://www.pokeharbor.com/2022/06/pokemon-vega-fairy-edition-ex/',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2022/06/VegaFairyEditionEX-min.jpeg',
+    description:
+      'A cult-favorite Japanese hack with the completely original Tohoak region, dozens of fan-designed creatures, and genuinely brutal difficulty. The Fairy Edition EX build is the current recommended English translation with modern battle mechanics.',
+    features: [
+      'Original Tohoak region',
+      'Dozens of original Pok\u00e9mon designs',
+      'Fairy Edition EX: fairy type + modern split',
+      'Famously challenging trainers',
+      'Full English translation',
+    ],
+    difficulty: 'Advanced',
+    tags: ['New Region', 'Original Creatures', 'Completed', 'Difficulty'],
+    completed: true,
+    rating: 8.5,
+    hours: '25-40',
+    gradient: ['#0a0022', '#8c7dff'],
+    accentColor: '#8c7dff',
+  },
+  {
+    id: 'super-gold-97',
+    title: 'Pok\u00e9mon Super Gold 97',
+    subtitle: 'The lost 1997 Spaceworld demo, reborn',
+    platform: 'GBC',
+    baseGame: 'Pok\u00e9mon Gold (U)',
+    baseRomName: 'Pokemon - Gold Version (U).gbc',
+    patchFormat: 'patch',
+    projectUrl: 'https://www.pokeharbor.com/2021/07/pokemon-super-gold-97/',
+    coverUrl: 'https://www.pokeharbor.com/wp-content/uploads/2021/07/pokemon-gold-97.png',
+    description:
+      'A playable recreation of the legendary 1997 Spaceworld Gold and Silver demo that shocked the internet when it leaked. Explore the original Johto design with beta Pok\u00e9mon, cut towns, and the strange proto-Kanto that almost was.',
+    features: [
+      'Faithful Spaceworld \u201997 demo recreation',
+      'Beta Pok\u00e9mon designs restored',
+      'Cut towns and routes from the original plan',
+      'Completed main story and postgame',
+      'A living piece of Pok\u00e9mon history',
+    ],
+    difficulty: 'Intermediate',
+    tags: ['Beta Restoration', 'Completed', 'Historical', 'Johto'],
+    completed: true,
+    rating: 8.9,
+    hours: '20-30',
+    gradient: ['#221c00', '#D4AF37'],
+    accentColor: '#D4AF37',
+  },
+  {
+    id: 'mind-crystal',
+    title: 'Pok\u00e9mon Mind Crystal',
+    subtitle: 'SoulSilver with reusable TMs and fair evolutions',
+    platform: 'NDS',
+    baseGame: 'Pok\u00e9mon SoulSilver (U)',
+    baseRomName: 'Pokemon - SoulSilver Version (US).nds',
+    patchFormat: 'xdelta',
+    projectUrl: 'https://projectpokemon.org/home/forums/topic/36971-pok%C3%A9mon-mindcrystal/',
+    coverUrl: 'https://projectpokemon.org/home/uploads/monthly_2024_04/image.png.0da79e2c767d12f4399e5c3d1d4d47b1.png',
+    description:
+      'A respected SoulSilver enhancement by MeroMero. Every Pok\u00e9mon is obtainable through fair evolution methods, TMs are reusable, difficulty is tuned up, and dozens of quality-of-life improvements keep the best Johto remake fresh.',
+    features: [
+      'Reusable TMs on NDS',
+      'All Pok\u00e9mon obtainable without trades',
+      'Harder trainer battles',
+      'Dozens of QoL improvements',
+      'Ongoing fan translation patches',
+    ],
+    difficulty: 'Intermediate',
+    tags: ['Enhancement', 'Quality-of-Life', 'Updated Regularly', 'Johto'],
+    completed: false,
+    rating: 8.7,
+    hours: '40-60',
+    gradient: ['#001f14', '#9ACD32'],
+    accentColor: '#9ACD32',
   },
 ];
 

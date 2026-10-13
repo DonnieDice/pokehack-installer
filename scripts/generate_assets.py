@@ -25,9 +25,9 @@ import zlib
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(REPO_ROOT, "assets")
 
-# Brand colors (RGB).
-BG = (0x0a, 0x0a, 0x0f)      # #0a0a0f  dark background
-PRIMARY = (0xff, 0x47, 0x57)  # #ff4757  red accent
+# Brand colors (RGB) — RGX Mods / RealmGX palette (rgxmods.com).
+BG = (0x05, 0x08, 0x10)      # #050810  ink background
+PRIMARY = (0x7d, 0xf2, 0xff)  # #7df2ff  cyan accent
 WHITE = (0xff, 0xff, 0xff)
 RED = PRIMARY
 
@@ -212,6 +212,11 @@ HACK_COVERS = [
     ("polished-crystal", "GBC", "#00E5C0"),
     ("pokemon-orange", "GBC", "#FF7A1A"),
     ("roaring-red", "GBA", "#C86BFF"),
+    ("flora-sky", "GBA", "#52C234"),
+    ("mega-power", "GBA", "#FFD93D"),
+    ("vega", "GBA", "#8c7dff"),
+    ("super-gold-97", "GBC", "#D4AF37"),
+    ("mind-crystal", "NDS", "#9ACD32"),
 ]
 
 

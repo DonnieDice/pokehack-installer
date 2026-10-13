@@ -1,16 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, DIFFICULTY_COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
 import { COVERS } from '../data/covers';
 
 export default function HackCard({ hack, onPress }) {
+  const [remoteFailed, setRemoteFailed] = useState(false);
   const platformColor = PLATFORM_COLORS[hack.platform] || COLORS.primary;
   const difficultyColor = DIFFICULTY_COLORS[hack.difficulty] || COLORS.textSub;
-  const cover = COVERS[hack.id];
+  const localCover = COVERS[hack.id];
+  const useRemote = hack.coverUrl && !remoteFailed;
+  const source = useRemote ? { uri: hack.coverUrl } : localCover;
   return (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
-      {cover ? (
-        <Image source={cover} style={s.cover} resizeMode="cover" />
+      {source ? (
+        <Image
+          source={source}
+          style={s.cover}
+          resizeMode="cover"
+          onError={() => setRemoteFailed(true)}
+        />
       ) : (
         <View style={[s.coverFallback, { backgroundColor: hack.accentColor || platformColor }]} />
       )}
@@ -50,8 +58,8 @@ const s = StyleSheet.create({
     marginBottom: SPACING.sm,
     overflow: 'hidden',
   },
-  cover: { width: 88, height: '100%' },
-  coverFallback: { width: 88 },
+  cover: { width: 110, height: 96 },
+  coverFallback: { width: 110, height: 96 },
   body: { flex: 1, padding: SPACING.md },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { color: COLORS.text, fontFamily: FONT.bodyBold, fontSize: 17, flex: 1, marginRight: SPACING.sm },

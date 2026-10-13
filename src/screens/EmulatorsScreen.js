@@ -1,8 +1,22 @@
 import React from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EMULATORS, playStoreSearchUrl } from '../data/emulators';
 import { COLORS, FONT, PLATFORM_COLORS, RADIUS, SPACING } from '../theme';
+
+function EmuIcon({ emu }) {
+  const [failed, setFailed] = React.useState(false);
+  if (!emu.iconUrl || failed) {
+    return (
+      <View style={[s.icon, { backgroundColor: COLORS.primaryDim, alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={s.iconLetter}>{emu.name.charAt(0)}</Text>
+      </View>
+    );
+  }
+  return (
+    <Image source={{ uri: emu.iconUrl }} style={s.icon} onError={() => setFailed(true)} />
+  );
+}
 
 export default function EmulatorsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -29,8 +43,11 @@ export default function EmulatorsScreen({ navigation }) {
       {EMULATORS.map((emu) => (
         <View key={emu.id} style={s.card}>
           <View style={s.cardTop}>
-            <Text style={s.name}>{emu.name}</Text>
-            <Text style={s.price}>{emu.price}</Text>
+            <EmuIcon emu={emu} />
+            <View style={{ flex: 1, marginLeft: SPACING.md }}>
+              <Text style={s.name}>{emu.name}</Text>
+              <Text style={s.price}>{emu.price}</Text>
+            </View>
           </View>
           <Text style={s.note}>{emu.note}</Text>
           <View style={s.platformRow}>
@@ -68,7 +85,9 @@ const s = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.sm,
   },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardTop: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' },
+  icon: { width: 44, height: 44, borderRadius: 10 },
+  iconLetter: { color: COLORS.primary, fontFamily: FONT.pixel, fontSize: 16 },
   name: { color: COLORS.text, fontFamily: FONT.bodyBold, fontSize: 16 },
   price: { color: COLORS.warning, fontFamily: FONT.pixel, fontSize: 7 },
   note: { color: COLORS.textSub, fontFamily: FONT.body, fontSize: 13, marginTop: 4, lineHeight: 18 },
