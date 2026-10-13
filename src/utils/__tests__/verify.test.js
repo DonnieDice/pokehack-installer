@@ -10,7 +10,6 @@
 
 const { verifyRom, formatVerifyError } = require('../verify');
 const { getBaseRomSpec, BASE_ROMS } = require('../../data/baseRoms');
-const { sha256 } = require('../sha256');
 
 // Minimal base64 encoder for Uint8Array (keeps tests dependency-free).
 const btoaFor =
@@ -24,7 +23,8 @@ const btoaFor =
 
 // Synthetic fixture ROM bytes (small, never real copyrighted material).
 const FIXTURE_BYTES = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
-const FIXTURE_HASH = sha256(FIXTURE_BYTES);
+// Independently computed with Node crypto, not the vendored implementation.
+const FIXTURE_HASH = '8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45';
 
 // A baseRomName that exists in the manifest but whose hash is a placeholder
 // (REPLACE_ME). We build a per-test expected spec by copying the manifest and
@@ -68,9 +68,8 @@ jest.mock('expo-file-system', () => {
 
 const FileSystem = require('expo-file-system');
 
-/** Install a mocked ROM file with a given byte content and return its hash. */
+/** Install a mocked ROM file with a given byte content. */
 function installMockRom(bytes) {
-  const hash = sha256(bytes);
   mockState.romBytes = bytes;
   mockState.info = { exists: true, size: bytes.length };
   FileSystem.getInfoAsync.mockImplementation((uri) =>
@@ -82,7 +81,6 @@ function installMockRom(bytes) {
     if (typeof Buffer !== 'undefined') return Promise.resolve(Buffer.from(bytes).toString('base64'));
     return Promise.resolve(btoa(bin));
   });
-  return hash;
 }
 
 /** Replace the manifest entry for KNOWN_NAME with a fully-verified spec. */
@@ -131,16 +129,16 @@ describe('getBaseRomSpec', () => {
 
 describe('verifyRom', () => {
   test('passes when size and hash both match the manifest', async () => {
-    const hash = installMockRom(FIXTURE_BYTES);
+    installMockRom(FIXTURE_BYTES);
     const restore = patchManifest(KNOWN_NAME, {
       size: FIXTURE_BYTES.length,
-      sha256: hash,
+      sha256: FIXTURE_HASH,
       verified: true,
     });
     try {
       const out = await verifyRom('/mock/rom', KNOWN_NAME);
       expect(out.size).toBe(FIXTURE_BYTES.length);
-      expect(out.sha256).toBe(hash);
+      expect(out.sha256).toBe(FIXTURE_HASH);
     } finally {
       restore();
     }

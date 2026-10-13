@@ -7,7 +7,6 @@
  */
 
 const { getCachedPatch, clearPatchCache } = require('../patchCache');
-const { sha256 } = require('../sha256');
 const { base64ToBytes } = require('../b64');
 
 // Reusable base64 encoder for Uint8Array.
@@ -21,8 +20,10 @@ function u8ToB64(bytes) {
 // ---- fixture data ----
 const PATCH_BYTES_1 = new Uint8Array([0x50, 0x41, 0x54, 0x43, 0x48, 0x00, 0x01, 0x02]);
 const PATCH_BYTES_2 = new Uint8Array([0x50, 0x41, 0x54, 0x43, 0x48, 0x03, 0x04, 0x05]);
-const SHA256_1 = sha256(PATCH_BYTES_1);
-const SHA256_2 = sha256(PATCH_BYTES_2);
+// Independently computed with Node crypto so broken hashing cannot agree
+// with its own expected values and silently pass integrity tests.
+const SHA256_1 = 'c78370bb7cef70de731ba4a788f7c60a49e45d1e30329a559bf44e4f20fe0991';
+const SHA256_2 = '74feed1b115060a80653b23ce202b057b6dca90dee275ceeb5c71fe0143ba1a4';
 
 // ---- expo-file-system mock surface ----
 const mockState = {
