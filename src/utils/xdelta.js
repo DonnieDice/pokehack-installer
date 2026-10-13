@@ -20,22 +20,22 @@ const NUM_ADDR_MODES = 2 + DEFAULT_S_NEAR + DEFAULT_S_SAME; // 9
 // ---------------------------------------------------------------------------
 // Variable-length integer (RFC 3284 section 2)
 //
-// 7-bit groups; MSB (0x80) set = LAST byte (continuation bit inverted from LEB128).
+// Most-significant 7-bit group first; MSB (0x80) means another byte follows.
 // ---------------------------------------------------------------------------
 function readVarint(data, pos) {
   let value = 0;
-  let shift = 1;
   while (true) {
     if (pos >= data.length) {
       throw new Error('Truncated xdelta: varint runs past end of patch');
     }
     const byte = data[pos++];
-    value += (byte & 0x7f) * shift;
-    if ((byte & 0x80) !== 0) {
+    value = value * 128 + (byte & 0x7f);
+    if (!Number.isSafeInteger(value)) {
+      throw new Error('xdelta: varint exceeds safe integer range');
+    }
+    if ((byte & 0x80) === 0) {
       return { value, pos };
     }
-    shift <<= 7;
-    value += shift;
   }
 }
 
