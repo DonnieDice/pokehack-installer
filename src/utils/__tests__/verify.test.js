@@ -26,11 +26,17 @@ const FIXTURE_BYTES = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 
 // Independently computed with Node crypto, not the vendored implementation.
 const FIXTURE_HASH = '8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45';
 
-// A baseRomName that exists in the manifest but whose hash is a placeholder
-// (REPLACE_ME). We build a per-test expected spec by copying the manifest and
-// substituting a real verified hash + correct size, so the test controls the
-// "expected" side without ever committing ROM data.
+// A baseRomName that exists in the manifest. Per-test specs are built by
+// copying the manifest and substituting a real verified hash + correct size,
+// so each test controls the "expected" side without ever committing ROM data.
 const KNOWN_NAME = Object.keys(BASE_ROMS)[0];
+// Placeholder entry (REPLACE_ME) used by the unverified-hash gate test.
+// Emerald remains a placeholder after the rom-hack-installer merge (only
+// FireRed + Crystal are verified); resolve it dynamically so the test does
+// not depend on key order.
+const PLACEHOLDER_NAME =
+  Object.keys(BASE_ROMS).find((k) => BASE_ROMS[k].sha256 === 'REPLACE_ME') ||
+  KNOWN_NAME;
 
 // ---- expo-file-system mock surface ----
 // jest.mock factories cannot reference out-of-scope variables, so the mutable
@@ -186,17 +192,17 @@ describe('verifyRom', () => {
 
   test('rejects a manifest entry whose hash is an unverified placeholder', async () => {
     installMockRom(FIXTURE_BYTES);
-    // Known-name manifest entry has sha256 === 'REPLACE_ME' by default. Patch
+    // Placeholder manifest entry has sha256 === 'REPLACE_ME' by default. Patch
     // only the size so the size check passes and we reach the unverified gate.
-    const restore = patchManifest(KNOWN_NAME, { size: FIXTURE_BYTES.length });
+    const restore = patchManifest(PLACEHOLDER_NAME, { size: FIXTURE_BYTES.length });
     try {
-      expect(BASE_ROMS[KNOWN_NAME].sha256).toBe('REPLACE_ME');
+      expect(BASE_ROMS[PLACEHOLDER_NAME].sha256).toBe('REPLACE_ME');
       // Size matches the fixture, so we get past the size check and hit the
       // unverified-hash gate — which must BLOCK, not silently pass.
-      await expect(verifyRom('/mock/rom', KNOWN_NAME)).rejects.toMatchObject({
+      await expect(verifyRom('/mock/rom', PLACEHOLDER_NAME)).rejects.toMatchObject({
         code: 'ROM_HASH_UNVERIFIED',
       });
-      await expect(verifyRom('/mock/rom', KNOWN_NAME)).rejects.toThrow(/Wrong base ROM/);
+      await expect(verifyRom('/mock/rom', PLACEHOLDER_NAME)).rejects.toThrow(/Wrong base ROM/);
     } finally {
       restore();
     }
