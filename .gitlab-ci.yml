@@ -86,7 +86,18 @@ android-debug-apk:
           f.write(gradle)
       print('debug build patched: applicationIdSuffix=debug')
       PYEOF
-    - cd android && ./gradlew assembleDebug --no-daemon
+    # Keep the whole build inside the runner's 8GB docker memory cgroup:
+    # Gradle daemon (~3.2GB RSS at default heap) + Kotlin daemon + Metro/node
+    # peaked over the limit and the kernel oom-killer killed the daemon during
+    # createBundle*JsAndAssets (CONSTRAINT_MEMCG, dmesg-confirmed). Cap all
+    # three big processes instead.
+    - |
+      cat >> android/gradle.properties <<'EOF'
+      org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=384m
+      kotlin.daemon.jvmargs=-Xmx1024m
+      org.gradle.workers.max=2
+      EOF
+    - cd android && NODE_OPTIONS=--max-old-space-size=1536 ./gradlew assembleDebug --no-daemon
     # Packaging regression guard (#23): fail the build if the debug APK ever
     # regresses to the SAME application id as the signed release app (the
     # delivered job 53192 artifact did, causing signature conflicts and the
@@ -192,7 +203,15 @@ android-release-apk:
           f.write(gradle)
       print('release signing config injected into ' + path)
       PYEOF
-    - cd android && ./gradlew assembleRelease --no-daemon
+    # Same memory caps as the debug job: all three big build processes must
+    # stay under the runner's 8GB cgroup (see the note above).
+    - |
+      cat >> android/gradle.properties <<'EOF'
+      org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=384m
+      kotlin.daemon.jvmargs=-Xmx1024m
+      org.gradle.workers.max=2
+      EOF
+    - cd android && NODE_OPTIONS=--max-old-space-size=1536 ./gradlew assembleRelease --no-daemon
     # Packaging regression guard (#23): fail the build if the release APK ever
     # ships without the embedded JS bundle (a Metro-less standalone install
     # then cannot start), with a degenerate/wrong-id bundle, or accidentally
