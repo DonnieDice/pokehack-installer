@@ -1,8 +1,8 @@
 const { buildCatalog } = require('../buildCatalog');
 
-test('legacy estimates are omitted and reviewed source records replace legacy ids', () => {
+test('legacy details are preserved and reviewed source records replace legacy ids', () => {
   const legacy = [{ id: 'example', rating: 8.1, hours: '30', difficulty: 'Expert', completed: true, tags: ['Completed', 'New Region'] }];
-  expect(buildCatalog(legacy, [])[0]).toEqual({ id: 'example', tags: ['New Region'], sourceType: 'unreviewed' });
+  expect(buildCatalog(legacy, [])[0]).toEqual({ ...legacy[0], sourceType: 'unreviewed' });
   const source = {
     id: 'example', title: 'Example', platform: 'GB', verificationDate: '2026-10-13',
     projectUrl: 'https://creator.example/project', sourceUrl: 'https://creator.example/project',
@@ -14,6 +14,7 @@ test('legacy estimates are omitted and reviewed source records replace legacy id
   expect(result[0].rating).toBeUndefined();
   expect(result[0].completed).toBeUndefined();
   expect(result[0].tags).toEqual([]);
+  expect(result[0].subtitle).toBe('Based on a creator source');
 });
 
 test('unsafe ids and unknown platforms fail rather than generating asset paths', () => {

@@ -3,14 +3,10 @@ const PLATFORM_ACCENTS = { GB: '#FFD93D', GBC: '#9ACD32', GBA: '#7df2ff', NDS: '
 // Source records can replace a historical entry, but cannot silently duplicate
 // it. Unknown metadata stays unknown rather than acquiring estimated defaults.
 export function buildCatalog(legacy, reviewed) {
-  const catalog = new Map(legacy.map((entry) => {
-    const { rating, hours, difficulty, completed, ...hack } = entry;
-    return [hack.id, {
-      ...hack,
-      sourceType: 'unreviewed',
-      tags: hack.tags.filter((tag) => !['Completed', 'Updated Regularly'].includes(tag)),
-    }];
-  }));
+  const catalog = new Map(legacy.map((hack) => [
+    hack.id,
+    { ...hack, sourceType: 'unreviewed' },
+  ]));
   const seen = new Set();
   for (const record of reviewed) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(record.id)) throw new Error('Invalid catalog id');
@@ -20,7 +16,8 @@ export function buildCatalog(legacy, reviewed) {
     const accentColor = PLATFORM_ACCENTS[record.platform];
     const hack = {
       ...record,
-      subtitle: record.subtitle || 'Creator project',
+      subtitle: record.subtitle
+        || `Based on ${(record.baseGame || '').replace(/\s*\([^)]*\)\s*$/, '') || 'a creator source'}`,
       tags: record.tags || [],
       accentColor,
       gradient: ['#050810', accentColor],

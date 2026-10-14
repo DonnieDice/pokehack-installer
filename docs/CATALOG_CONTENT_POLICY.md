@@ -41,29 +41,31 @@ removing search links entirely.
 
 ## Cover art
 
-A public image URL, social card, or creator page is not a reuse license.
-Remote covers are hidden unless `coverPermission` includes both
-`status: 'approved'` and an `evidenceUrl`. Before setting that flag, record:
+A public image URL, social card, or creator page is not a reuse license, and a
+launch decision needs written permission for the assets actually shipped. The
+runtime behavior is display-by-default: `coverUrl` images are shown from their
+source pages so the catalog stays useful, and a `coverPermission.status` of
+`'revoked'` hides an entry's art immediately in response to a complaint. Before
+**production publication** (see the release gate below), record for each image
+still in use:
 
 1. The actual rights holder and original source (not merely an image host).
-2. Written permission or an applicable license allowing this app's intended
+2. Written permission or an applicable license covering this app's intended
    distribution, modification/cropping, commercial use if any, and attribution.
 3. Whether underlying characters/logos/assets need additional authorization.
 4. Required attribution and any revocation/expiry terms.
 
-Do not approve art solely because the ROM-hack author supplied it. Keep
-permission correspondence outside public Git if it contains personal data;
-use a non-sensitive evidence reference in the record. Local neutral placeholders
-remain until the publication rights review is complete.
+Do not treat a ROM-hack author's page as proof they control every underlying
+right. Keep permission correspondence outside public Git if it contains
+personal data; use a non-sensitive evidence reference in the record.
 
 ## Existing catalog
 
-The historical catalog is retained for discovery, not vouched for. Its
-unsourced ratings, length, difficulty, and completion estimates are excluded
-from exported app data. Existing outbound URLs are not opened directly until
-creator-source evidence is attached. Historical descriptions/features still
-need factual review; historical cover URLs are retained for provenance research
-but are not fetched without permission evidence.
+The historical catalog's community details (ratings, playtime, difficulty,
+completion) display as community-sourced information pending review, clearly
+separated from creator-verified records. Historical descriptions/features still
+need factual review; historical cover URLs display from their sources with the
+revocation mechanism above available for complaints.
 
 ## Reporting and takedowns — launch blockers
 

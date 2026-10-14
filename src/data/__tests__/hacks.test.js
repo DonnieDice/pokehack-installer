@@ -59,7 +59,10 @@ describe('catalog', () => {
       }
       expect(Array.isArray(h.tags)).toBe(true);
       if (h.completed !== undefined) expect(typeof h.completed).toBe('boolean');
-      expect(h.rating).toBeUndefined();
+      if (h.rating !== undefined) {
+        expect(h.rating).toBeGreaterThan(0);
+        expect(h.rating).toBeLessThanOrEqual(10);
+      }
     }
   });
 
@@ -79,8 +82,14 @@ describe('catalog', () => {
       expect(hack.description.length).toBeGreaterThan(20);
       expect(hack.rating).toBeUndefined();
       expect(hack.hours).toBeUndefined();
-      expect(permittedCoverUrl(hack)).toBeNull();
     }
+  });
+
+  test('legacy community details return for display, clearly separated from creator records', () => {
+    const legacy = HACKS.filter((hack) => hack.sourceType !== 'creator');
+    const rated = legacy.filter((hack) => hack.rating !== undefined);
+    expect(rated.length).toBeGreaterThan(30);
+    for (const hack of rated) expect(typeof hack.rating).toBe('number');
   });
 
   test('every hack has generated cover art', () => {

@@ -5,23 +5,33 @@ import HackCard from '../components/HackCard';
 import { HACKS, PLATFORMS } from '../data/hacks';
 import { COLORS, FONT, RADIUS, SPACING } from '../theme';
 
+const DIFFICULTY_ORDER = { Beginner: 0, Intermediate: 1, Advanced: 2, Expert: 3 };
+
 const SORTS = [
+  { id: 'rating', label: 'TOP RATED' },
   { id: 'title', label: 'A-Z' },
+  { id: 'difficulty', label: 'DIFFICULTY' },
   { id: 'platform', label: 'PLATFORM' },
 ];
 
 function sortHacks(list, sort) {
   const out = [...list];
   if (sort === 'title') return out.sort((a, b) => a.title.localeCompare(b.title));
+  if (sort === 'difficulty')
+    return out.sort(
+      (a, b) =>
+        (DIFFICULTY_ORDER[b.difficulty] ?? -1) - (DIFFICULTY_ORDER[a.difficulty] ?? -1) ||
+        a.title.localeCompare(b.title),
+    );
   if (sort === 'platform') return out.sort((a, b) => a.platform.localeCompare(b.platform));
-  return out.sort((a, b) => a.title.localeCompare(b.title));
+  return out.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1) || a.title.localeCompare(b.title));
 }
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [platform, setPlatform] = useState('All');
-  const [sort, setSort] = useState('title');
+  const [sort, setSort] = useState('rating');
 
   const hacks = useMemo(() => {
     const q = query.trim().toLowerCase();

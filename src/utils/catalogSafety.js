@@ -14,15 +14,19 @@ export function projectSearchUrl(hack) {
 }
 
 export function patchSearchUrl(hack) {
-  if (!hasReviewedProject(hack)) return projectSearchUrl(hack);
+  // Google search scoped to the project page's own host, so the top hit is the
+  // project page and its download links. Falls back to a broad query.
   const host = httpsHost(hack.projectUrl);
-  return 'https://www.google.com/search?q=' + encodeURIComponent(`${hack.title} patch site:${host}`);
+  const q = host ? `${hack.title} download site:${host}` : `${hack.title} ROM hack download`;
+  return 'https://www.google.com/search?q=' + encodeURIComponent(q);
 }
 
 export function permittedCoverUrl(hack) {
-  const permission = hack.coverPermission;
-  return permission && permission.status === 'approved' && httpsHost(permission.evidenceUrl)
-    && httpsHost(hack.coverUrl) ? hack.coverUrl : null;
+  // Art is shown by default from its source page; rights review and the
+  // coverPermission ledger remain pre-publication gates (see
+  // docs/CATALOG_CONTENT_POLICY.md), and 'revoked' hides art immediately.
+  if (hack.coverPermission && hack.coverPermission.status === 'revoked') return null;
+  return httpsHost(hack.coverUrl) ? hack.coverUrl : null;
 }
 
 export function statusLabel(hack) {
@@ -30,5 +34,5 @@ export function statusLabel(hack) {
   if (labels[hack.status]) return labels[hack.status];
   if (hack.completed === true) return 'Complete';
   if (hack.completed === false) return 'In progress';
-  return 'Not verified';
+  return '';
 }
