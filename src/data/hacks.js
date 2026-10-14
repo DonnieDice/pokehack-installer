@@ -12,8 +12,8 @@ const LEGACY_HACKS = [
     baseGame: 'Pokémon Fire Red (U)',
     baseRomName: 'Pokemon - Fire Red Version (U)(Squirrels).gba',
     patchFormat: 'ups',
-    projectUrl: 'https://pokefirered.com/pokemon-unbound/',
-    coverUrl: 'https://pokefirered.com/wp-content/uploads/2026/06/pokemon-unbound-Download.webp',
+    projectUrl: 'https://www.pokecommunity.com/threads/pok%C3%A9mon-unbound-completed.382178/',
+    coverUrl: 'https://i.imgur.com/HMT9q3Z.png',
     description: 'Widely regarded as the greatest GBA ROM hack ever made. Features a massive new region, a compelling story with full voiceover ambitions, multiple difficulty modes, 100+ optional missions, a custom battle engine, and over 100 hours of content',
     features: [
       'Difficulty modes (Easy / Normal / Hard / Challenge)',
@@ -331,7 +331,7 @@ const LEGACY_HACKS = [
     baseRomName: 'Pokemon - HeartGold Version (US).nds',
     patchFormat: 'xdelta',
     projectUrl: 'https://gbatemp.net/threads/pokemon-sacred-gold-storm-silver.327567',
-    coverUrl: 'https://data.classicgames.me/nds-rom/pokemon-sacred-gold-and-storm-silver.jpg',
+    coverUrl: 'https://i.imgur.com/eGlX6.png',
     description:
       'Drayano\u2019s classic HeartGold and SoulSilver overhaul. Every gym leader and champion carries a full, dangerous team, all 493 Pok\u00e9mon are catchable, and Johto\u2019s pacing is respected while the challenge is cranked up.',
     features: [
@@ -358,7 +358,6 @@ const LEGACY_HACKS = [
     baseRomName: 'Pokemon - Crystal Version (U).gbc',
     patchFormat: 'patch',
     projectUrl: 'https://github.com/Rangi42/polishedcrystal',
-    coverUrl: 'https://opengraph.githubassets.com/9834986ecbfa899c06599ded6dd2e7e68e87d079c4c3b79e27694efa301adb60/Rangi42/polishedcrystal',
     description:
       'A lovingly maintained enhancement of Pok\u00e9mon Crystal by Rangi. Choose faithful, vanilla, or modern versions: reusable TMs, the physical/special split, later-gen moves and abilities, and hundreds of fixes \u2014 while keeping the original Johto soul intact.',
     features: [
@@ -385,7 +384,6 @@ const LEGACY_HACKS = [
     baseRomName: 'Pokemon - Crystal Version (U).gbc',
     patchFormat: 'ips',
     projectUrl: 'https://github.com/PiaCarrot/pokeorange',
-    coverUrl: 'https://opengraph.githubassets.com/007fcce02fe340ef10024b0d804e62bb621530c1fca7f9249e38187ea2b05387/PiaCarrot/pokeorange',
     description:
       'A beloved Crystal-based hack set in the anime\u2019s Orange Islands. Sail between islands, take on the Orange Crew in unusual challenge formats, and enjoy a compact, charming adventure that fits the handheld era perfectly.',
     features: [
