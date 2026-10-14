@@ -43,7 +43,7 @@ android-debug-apk:
   tags: [android]
   # Serialize against the release job: two concurrent Gradle builds on this
   # runner repeatedly OOM ("Gradle build daemon disappeared unexpectedly").
-  resource_group: android-gradle
+  resource_group: android-gradle-2
   cache:
     # Pull-only: re-pushing the .gradle home + node_modules (126k+ files)
     # stalled the runner's cache-upload step for hours after BUILD SUCCESSFUL.
@@ -109,7 +109,7 @@ android-release-apk:
   image: mingc/android-build-box:latest
   tags: [android]
   # Serialize against the debug job (concurrent Gradle builds OOM the runner).
-  resource_group: android-gradle
+  resource_group: android-gradle-2
   cache:
     # Pull-only: the push step is what hung pipeline 4669 for hours after the
     # APK had already built successfully (see android-debug-apk note).
