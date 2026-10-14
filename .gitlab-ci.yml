@@ -45,12 +45,16 @@ android-debug-apk:
   # runner repeatedly OOM ("Gradle build daemon disappeared unexpectedly").
   resource_group: android-gradle
   cache:
+    # Pull-only: re-pushing the .gradle home + node_modules (126k+ files)
+    # stalled the runner's cache-upload step for hours after BUILD SUCCESSFUL.
+    # The node_modules cache keyed on package.json is still reused; new keys
+    # simply fall back to a fresh npm install.
     key:
       files:
         - package.json
     paths:
       - node_modules/
-      - .gradle/
+    policy: pull
   script:
     - npm install --no-audit --no-fund
     - npx expo prebuild -p android --no-install
@@ -102,12 +106,14 @@ android-release-apk:
   # Serialize against the debug job (concurrent Gradle builds OOM the runner).
   resource_group: android-gradle
   cache:
+    # Pull-only: the push step is what hung pipeline 4669 for hours after the
+    # APK had already built successfully (see android-debug-apk note).
     key:
       files:
         - package.json
     paths:
       - node_modules/
-      - .gradle/
+    policy: pull
   script:
     - npm install --no-audit --no-fund
     # Fail closed with a clear message when the operator has not set the
