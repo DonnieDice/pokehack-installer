@@ -32,13 +32,13 @@ describe('CI packaging guard wiring (issue #23)', () => {
 
   test('android-debug-apk job runs the guard in debug mode after the build', () => {
     expect(ci).toContain(
-      'python3 $CI_PROJECT_DIR/scripts/verify-apk-packaging.py --mode debug android/app/build/outputs/apk/debug/*.apk'
+      'python3 $CI_PROJECT_DIR/scripts/verify-apk-packaging.py --mode debug $CI_PROJECT_DIR/android/app/build/outputs/apk/debug/*.apk'
     );
   });
 
   test('android-release-apk job runs the guard in release mode after the build', () => {
     expect(ci).toContain(
-      'python3 $CI_PROJECT_DIR/scripts/verify-apk-packaging.py --mode release android/app/build/outputs/apk/release/*.apk'
+      'python3 $CI_PROJECT_DIR/scripts/verify-apk-packaging.py --mode release $CI_PROJECT_DIR/android/app/build/outputs/apk/release/*.apk'
     );
   });
 });
