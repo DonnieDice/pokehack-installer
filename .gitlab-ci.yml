@@ -43,7 +43,7 @@ android-debug-apk:
   tags: [android]
   # Serialize against the release job: two concurrent Gradle builds on this
   # runner repeatedly OOM ("Gradle build daemon disappeared unexpectedly").
-  resource_group: android-gradle
+  resource_group: android-gradle-2
   cache:
     key:
       files:
@@ -100,7 +100,7 @@ android-release-apk:
   image: mingc/android-build-box:latest
   tags: [android]
   # Serialize against the debug job (concurrent Gradle builds OOM the runner).
-  resource_group: android-gradle
+  resource_group: android-gradle-2
   cache:
     key:
       files:
